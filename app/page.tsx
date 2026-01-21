@@ -109,16 +109,14 @@ export default function Home() {
                 <Magnetic>
                   <Link
                     href="#work"
+                    style={{ padding: "10px" }}
                     className="inline-flex items-center justify-center rounded-full bg-zinc-900 text-sm font-medium text-white transition-colors hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
                   >
                     View Work
                   </Link>
                 </Magnetic>
                 <Magnetic>
-                  <Link
-                    href="#contact"
-                    className="inline-flex items-center justify-center rounded-full border border-zinc-200 text-sm font-medium text-zinc-900 transition-colors hover:bg-zinc-100 dark:border-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-800/50"
-                  >
+                  <Link href="#contact" style={{ padding: "10px" }}>
                     Get in Touch
                   </Link>
                 </Magnetic>
@@ -154,9 +152,9 @@ export default function Home() {
               >
                 {skills.map((skill) => (
                   <StaggerItem key={skill}>
-                    <span className="inline-flex rounded-full border border-zinc-300 px-5 py-2.5 text-sm text-zinc-900 dark:border-zinc-800 dark:text-zinc-300">
+                    <p className="p-2 inline-flex rounded-full border border-zinc-300 text-sm text-zinc-900 dark:border-zinc-800 dark:text-zinc-300">
                       {skill}
-                    </span>
+                    </p>
                   </StaggerItem>
                 ))}
               </StaggerContainer>

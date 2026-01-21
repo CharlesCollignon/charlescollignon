@@ -10,22 +10,22 @@ export function Header() {
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, ease: [0.21, 0.47, 0.32, 0.98] }}
-      className="fixed top-0 left-0 right-0 z-50 px-6 py-6 md:px-12 w-full backdrop-blur-md"
+      className="fixed top-0 left-0 right-0 z-50 md:px-12 w-full backdrop-blur-md py-4"
     >
       <nav className="flex items-center justify-center w-full">
         <div className="flex items-center gap-8">
           <div className="hidden items-center gap-8 text-sm font-medium text-zinc-600 dark:text-zinc-400 md:flex">
             <HoverLink
-              href="#work"
-              className="transition-colors hover:text-zinc-900 dark:hover:text-zinc-100"
-            >
-              Work
-            </HoverLink>
-            <HoverLink
               href="#about"
               className="transition-colors hover:text-zinc-900 dark:hover:text-zinc-100"
             >
               About
+            </HoverLink>
+            <HoverLink
+              href="#work"
+              className="transition-colors hover:text-zinc-900 dark:hover:text-zinc-100"
+            >
+              Work
             </HoverLink>
             <HoverLink
               href="#contact"
