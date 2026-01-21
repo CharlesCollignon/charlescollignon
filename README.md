@@ -1,36 +1,34 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Charles Collignon – Portfolio
 
-## Getting Started
+Welcome to my personal portfolio website! This is where I showcase my work as a Senior Frontend Developer & UI/UX Designer.
 
-First, run the development server:
+## About This Portfolio
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+This website is a reflection of my passion for creating beautiful, performant web experiences. It features:
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- **Interactive 3D Background** – Subtle animations and floating elements that respond to your movements
+- **Dark & Light Mode** – Switch between themes for your viewing comfort
+- **Project Showcase** – A curated selection of my work, including the Bitcoin Tracker app
+- **Smooth Animations** – Carefully crafted interactions that bring the site to life
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Get in Touch
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+I'm always excited to connect with fellow developers, designers, and anyone interested in building great digital experiences.
 
-## Learn More
+📧 **Email**: collignoncharles@gmail.com  
+💼 **LinkedIn**: [charles-collignon](https://www.linkedin.com/in/charles-collignon/)
 
-To learn more about Next.js, take a look at the following resources:
+## What I Do
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+I specialize in building modern web applications with a focus on:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- Clean, intuitive user interfaces
+- Smooth animations and interactions
+- Responsive, mobile-first design
+- Performance optimization
 
-## Deploy on Vercel
+Currently leading frontend development and design at QuantCube Technology, where I bring ideas to life through thoughtful code and design.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+---
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+© 2026 Charles Collignon
