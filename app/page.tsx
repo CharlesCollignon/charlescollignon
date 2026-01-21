@@ -72,13 +72,13 @@ export default function Home() {
         <section className="flex min-h-screen flex-col items-center justify-center px-6 md:px-12 lg:px-16">
           <div className="mx-auto w-full max-w-6xl">
             <FadeIn delay={0.2}>
-              <p className="mb-4 text-center text-sm font-medium uppercase tracking-widest text-zinc-500 dark:text-zinc-400">
+              <p className="mb-4 text-center text-sm font-medium uppercase tracking-widest text-zinc-900 dark:text-zinc-400">
                 Senior Frontend Developer & UI/UX Designer
               </p>
             </FadeIn>
 
             <FadeIn delay={0.4}>
-              <h1 className="mb-6 text-center text-5xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100 md:text-7xl lg:text-8xl">
+              <h1 className="mb-6 text-center text-5xl font-bold tracking-tight md:text-7xl lg:text-8xl text-zinc-800 dark:text-zinc-100">
                 Charles
                 <br />
                 Collignon
@@ -86,7 +86,7 @@ export default function Home() {
             </FadeIn>
 
             <div className="flex justify-center">
-              <div className="max-w-xl text-center text-lg text-zinc-600 dark:text-zinc-400 md:text-xl min-h-12 flex items-center justify-center">
+              <div className="max-w-xl text-center text-lg text-zinc-900 dark:text-zinc-400 md:text-xl min-h-12 flex items-center justify-center">
                 <TextType
                   texts={[
                     "I craft beautiful, performant web experiences.",
@@ -99,12 +99,12 @@ export default function Home() {
                   showCursor
                   cursorCharacter="|"
                   cursorBlinkDuration={0.7}
-                  className="text-lg text-zinc-600 dark:text-zinc-400 md:text-xl"
+                  className="text-lg text-zinc-900 dark:text-zinc-400 md:text-xl"
                 />
               </div>
             </div>
 
-            <FadeIn delay={1} className="mt-12">
+            <FadeIn delay={1}>
               <div className="flex flex-wrap items-center justify-center gap-4">
                 <Magnetic>
                   <Link
@@ -136,7 +136,7 @@ export default function Home() {
             <div className="flex flex-col items-center gap-12 md:gap-16">
               <FadeIn>
                 <div className="flex flex-col items-center justify-center text-center">
-                  <p className="text-sm font-medium uppercase tracking-widest text-zinc-500 dark:text-zinc-400">
+                  <p className="text-sm font-medium uppercase tracking-widest text-zinc-900 dark:text-zinc-400">
                     About
                   </p>
                   <h2 className="mt-4 text-4xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100 md:text-5xl">
@@ -154,7 +154,7 @@ export default function Home() {
               >
                 {skills.map((skill) => (
                   <StaggerItem key={skill}>
-                    <span className="inline-flex rounded-full border border-zinc-200 px-5 py-2.5 text-sm text-zinc-700 dark:border-zinc-800 dark:text-zinc-300">
+                    <span className="inline-flex rounded-full border border-zinc-300 px-5 py-2.5 text-sm text-zinc-900 dark:border-zinc-800 dark:text-zinc-300">
                       {skill}
                     </span>
                   </StaggerItem>
@@ -162,7 +162,7 @@ export default function Home() {
               </StaggerContainer>
 
               <FadeIn delay={0.2}>
-                <div className="flex flex-col items-center justify-center space-y-6 text-center text-zinc-600 dark:text-zinc-400 max-w-2xl">
+                <div className="flex flex-col items-center justify-center space-y-6 text-center text-zinc-900 dark:text-zinc-400 max-w-2xl">
                   <p>
                     I&apos;m a senior frontend developer and UI/UX designer with
                     a passion for creating elegant, user-centered digital
@@ -185,10 +185,10 @@ export default function Home() {
           id="work"
           className="min-h-screen w-full px-6 md:px-12 lg:px-16 flex items-center justify-center"
         >
-          <div className="mx-auto max-w-6xl">
+          <div className="mx-auto max-w-6xl flex flex-col gap-4">
             <FadeIn>
               <div className="flex flex-col items-center justify-center text-center">
-                <p className="text-sm font-medium uppercase tracking-widest text-zinc-500 dark:text-zinc-400">
+                <p className="text-sm font-medium uppercase tracking-widest text-zinc-900 dark:text-zinc-400">
                   Selected Work
                 </p>
                 <h2 className="mt-2 text-4xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100 md:text-5xl">
@@ -207,7 +207,7 @@ export default function Home() {
                         <h3 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">
                           {project.title}
                         </h3>
-                        <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+                        <p className="mt-1 text-sm text-zinc-900 dark:text-zinc-400">
                           {project.description}
                         </p>
                       </div>
@@ -261,7 +261,7 @@ export default function Home() {
 
                           {/* Tech stack on hover */}
                           <div className="absolute inset-0 flex items-end bg-linear-to-t from-black/80 to-transparent p-6 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-                            <div className="relative z-10">
+                            <div className="relative z-10 left-5">
                               <h3 className="text-xl font-semibold text-white">
                                 {project.title}
                               </h3>
@@ -288,7 +288,7 @@ export default function Home() {
           <div className="mx-auto flex gap-4 flex-col items-center text-center">
             <FadeIn>
               <div className="flex flex-col items-center justify-center text-center ">
-                <p className="text-sm font-medium uppercase tracking-widest text-zinc-500 dark:text-zinc-400">
+                <p className="text-sm font-medium uppercase tracking-widest text-zinc-900 dark:text-zinc-400">
                   Contact
                 </p>
                 <h2 className="mt-4 text-4xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100 md:text-5xl lg:text-6xl">
@@ -319,7 +319,7 @@ export default function Home() {
                     key={link.name}
                     href={link.href}
                     external
-                    className="text-sm font-medium text-zinc-600 transition-colors hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+                    className="text-sm font-medium text-zinc-900 transition-colors hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-100"
                   >
                     {link.name}
                   </HoverLink>
