@@ -1,6 +1,6 @@
 "use client";
 
-import { Scene3D } from "@/components/scene-3d";
+import { Scene3D, ForegroundScene3D } from "@/components/scene-3d";
 import { Header } from "@/components/header";
 import {
   FadeIn,
@@ -65,28 +65,28 @@ export default function Home() {
   return (
     <>
       <Scene3D />
+      <ForegroundScene3D />
       <Header />
 
       <main className="relative w-full">
-        {/* Hero Section */}
         <section className="flex min-h-screen flex-col items-center justify-center px-6 md:px-12 lg:px-16">
           <div className="mx-auto w-full max-w-6xl">
             <FadeIn delay={0.2}>
-              <p className="mb-4 text-center text-sm font-medium uppercase tracking-widest text-zinc-900 dark:text-zinc-400">
+              <p className="mb-4 text-center text-sm font-medium uppercase tracking-widest text-zinc-300 dark:text-zinc-400 mix-blend-difference">
                 Senior Frontend Developer & UI/UX Designer
               </p>
             </FadeIn>
 
             <FadeIn delay={0.4}>
-              <h1 className="mb-6 text-center text-5xl font-bold tracking-tight md:text-7xl lg:text-8xl text-zinc-800 dark:text-zinc-100">
+              <h1 className="mb-6 text-center text-4xl font-bold tracking-tight sm:text-5xl md:text-7xl lg:text-8xl text-zinc-300 dark:text-zinc-200 mix-blend-difference">
                 Charles
                 <br />
                 Collignon
               </h1>
             </FadeIn>
 
-            <div className="flex justify-center">
-              <div className="max-w-xl text-center text-lg text-zinc-900 dark:text-zinc-400 md:text-xl min-h-12 flex items-center justify-center">
+            <div className="flex justify-center px-4">
+              <div className="max-w-xl text-center text-base  md:text-lg lg:text-xl min-h-15 md:min-h-17.5 flex items-center justify-center">
                 <TextType
                   texts={[
                     "I craft beautiful, performant web experiences.",
@@ -99,24 +99,26 @@ export default function Home() {
                   showCursor
                   cursorCharacter="|"
                   cursorBlinkDuration={0.7}
-                  className="text-lg text-zinc-900 dark:text-zinc-400 md:text-xl"
+                  className="text-base text-zinc-300 dark:text-zinc-200 md:text-lg lg:text-xl mix-blend-difference"
                 />
               </div>
             </div>
 
             <FadeIn delay={1}>
-              <div className="flex flex-wrap items-center justify-center gap-4">
+              <div className="flex flex-wrap items-center justify-center gap-3 mt-8 md:mt-12 md:gap-4">
                 <Magnetic>
                   <Link
                     href="#work"
-                    style={{ padding: "10px" }}
-                    className="inline-flex items-center justify-center rounded-full bg-zinc-900 text-sm font-medium text-white transition-colors hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
+                    className="inline-flex items-center justify-center backdrop-blur-md rounded-full bg-zinc-900/50 px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200 md:px-8 md:py-3"
                   >
                     View Work
                   </Link>
                 </Magnetic>
                 <Magnetic>
-                  <Link href="#contact" style={{ padding: "10px" }}>
+                  <Link
+                    href="#contact"
+                    className="inline-flex items-center mix-blend-difference justify-center rounded-full border hover:backdrop-blur-md border-zinc-400 px-6 py-3 text-sm font-medium text-zinc-400 transition-colors hover:bg-zinc-900/50 hover:text-white dark:border-zinc-100 dark:text-zinc-100 dark:hover:bg-zinc-100 dark:hover:text-zinc-900 md:px-8 md:py-3"
+                  >
                     Get in Touch
                   </Link>
                 </Magnetic>
@@ -137,7 +139,7 @@ export default function Home() {
                   <p className="text-sm font-medium uppercase tracking-widest text-zinc-900 dark:text-zinc-400">
                     About
                   </p>
-                  <h2 className="mt-4 text-4xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100 md:text-5xl">
+                  <h2 className="mt-4 text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100 sm:text-4xl md:text-5xl">
                     Building digital
                     <br />
                     experiences
@@ -147,12 +149,12 @@ export default function Home() {
 
               {/* Skills */}
               <StaggerContainer
-                className="mt-16 flex flex-wrap justify-center gap-3"
+                className="mt-8 md:mt-16 flex flex-wrap justify-center gap-2 md:gap-3"
                 staggerDelay={0.05}
               >
                 {skills.map((skill) => (
                   <StaggerItem key={skill}>
-                    <p className="p-2 inline-flex rounded-full border border-zinc-300 text-sm text-zinc-900 dark:border-zinc-800 dark:text-zinc-300">
+                    <p className="px-4 py-2 inline-flex rounded-full border border-zinc-300 text-xs sm:text-sm text-zinc-900 dark:border-zinc-800 dark:text-zinc-300">
                       {skill}
                     </p>
                   </StaggerItem>
@@ -189,20 +191,20 @@ export default function Home() {
                 <p className="text-sm font-medium uppercase tracking-widest text-zinc-900 dark:text-zinc-400">
                   Selected Work
                 </p>
-                <h2 className="mt-2 text-4xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100 md:text-5xl">
+                <h2 className="mt-2 text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100 sm:text-4xl md:text-5xl">
                   Projects
                 </h2>
               </div>
             </FadeIn>
 
-            <div className="mt-12 flex justify-center md:mt-16 w-full">
-              <div className="grid gap-6 md:grid-cols-2 md:gap-8 w-full">
+            <div className="mt-8 md:mt-12 flex justify-center w-full">
+              <div className="grid gap-8 md:grid-cols-2 md:gap-8 w-full">
                 {projects.map((project, i) => (
                   <FadeIn key={project.title} delay={i * 0.1}>
                     <div>
                       {/* Title and description above the block */}
-                      <div className="mb-4">
-                        <h3 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">
+                      <div className="mb-3 md:mb-4">
+                        <h3 className="text-lg sm:text-xl font-semibold text-zinc-900 dark:text-zinc-100">
                           {project.title}
                         </h3>
                         <p className="mt-1 text-sm text-zinc-900 dark:text-zinc-400">
@@ -220,7 +222,7 @@ export default function Home() {
                               ? "noopener noreferrer"
                               : undefined
                           }
-                          className="group relative aspect-video min-h-75 block cursor-pointer overflow-hidden rounded-2xl bg-zinc-100 dark:bg-zinc-900"
+                          className="group relative aspect-video block cursor-pointer overflow-hidden rounded-xl md:rounded-2xl bg-zinc-100 dark:bg-zinc-900"
                           whileHover={{ scale: 1.02 }}
                           transition={{
                             type: "spring",
@@ -258,12 +260,12 @@ export default function Home() {
                           )}
 
                           {/* Tech stack on hover */}
-                          <div className="absolute inset-0 flex items-end bg-linear-to-t from-black/80 to-transparent p-6 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-                            <div className="relative z-10 left-5">
-                              <h3 className="text-xl font-semibold text-white">
+                          <div className="absolute inset-0 flex items-end bg-linear-to-t from-black/80 to-transparent p-4 md:p-6 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                            <div className="relative z-10">
+                              <h3 className="text-lg md:text-xl font-semibold text-white">
                                 {project.title}
                               </h3>
-                              <p className="mt-1 text-sm text-zinc-300">
+                              <p className="mt-1 text-xs md:text-sm text-zinc-300">
                                 {project.tech}
                               </p>
                             </div>
@@ -289,7 +291,7 @@ export default function Home() {
                 <p className="text-sm font-medium uppercase tracking-widest text-zinc-900 dark:text-zinc-400">
                   Contact
                 </p>
-                <h2 className="mt-4 text-4xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100 md:text-5xl lg:text-6xl">
+                <h2 className="mt-4 text-3xl font-bold tracking-tight mix-blend-difference text-zinc-400 dark:text-zinc-200 sm:text-4xl md:text-5xl lg:text-6xl">
                   Let&apos;s work
                   <br />
                   together
@@ -298,11 +300,11 @@ export default function Home() {
             </FadeIn>
 
             <FadeIn delay={0.2}>
-              <div className="mt-12 flex justify-center text-center">
+              <div className="mt-8 md:mt-12 flex justify-center text-center px-4">
                 <Magnetic>
                   <a
                     href="mailto:collignoncharles@gmail.com"
-                    className="text-2xl font-medium text-zinc-900 transition-colors hover:text-zinc-600 dark:text-zinc-100 dark:hover:text-zinc-400 md:text-3xl"
+                    className="mix-blend-differencetext-lg sm:text-xl md:text-2xl lg:text-3xl font-medium text-zinc-400 transition-colors hover:text-zinc-600 dark:text-zinc-200 dark:hover:text-zinc-400 break-all"
                   >
                     collignoncharles@gmail.com
                   </a>
@@ -311,13 +313,13 @@ export default function Home() {
             </FadeIn>
 
             <FadeIn delay={0.3}>
-              <div className="mt-12 flex items-center justify-center gap-8">
+              <div className="mt-8 md:mt-12 flex items-center justify-center gap-6 md:gap-8">
                 {socialLinks.map((link) => (
                   <HoverLink
                     key={link.name}
                     href={link.href}
                     external
-                    className="text-sm font-medium text-zinc-900 transition-colors hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-100"
+                    className="text-sm md:text-base font-medium text-zinc-900 transition-colors hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-100"
                   >
                     {link.name}
                   </HoverLink>
@@ -328,12 +330,12 @@ export default function Home() {
         </section>
 
         {/* Footer */}
-        <footer className="border-t border-zinc-100 py-8 px-6 dark:border-zinc-900 md:px-12 lg:px-16">
-          <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 md:flex-row">
-            <p className="text-sm text-zinc-500 dark:text-zinc-500">
+        <footer className=" py-6 md:py-6 px-6 md:px-12 lg:px-16">
+          <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 md:gap-4 text-center md:flex-row">
+            <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-500">
               © 2026 Charles Collignon. All rights reserved.
             </p>
-            <p className="text-sm text-zinc-500 dark:text-zinc-500">
+            <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-500">
               Built with Next.js, Three.js & Framer Motion
             </p>
           </div>

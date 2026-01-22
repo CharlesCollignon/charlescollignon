@@ -10,7 +10,7 @@ export function Header() {
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, ease: [0.21, 0.47, 0.32, 0.98] }}
-      className="fixed top-0 left-0 right-0 z-50 md:px-12 w-full backdrop-blur-md py-4"
+      className="fixed top-4 inset-x-0 z-50 md:px-12 backdrop-blur-md py-4 w-min mx-auto rounded-2xl"
     >
       <nav className="flex items-center justify-center w-full">
         <div className="flex items-center gap-8">

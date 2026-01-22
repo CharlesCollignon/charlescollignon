@@ -38,7 +38,7 @@ export function ThemeToggle() {
         strokeLinejoin="round"
         initial={false}
         animate={{
-          rotate: resolvedTheme === "dark" ? 0 : 180,
+          rotate: resolvedTheme === "dark" ? 0 : 40,
           opacity: 1,
         }}
         transition={{ duration: 0.3 }}
