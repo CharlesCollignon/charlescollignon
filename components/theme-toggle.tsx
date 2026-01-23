@@ -2,26 +2,14 @@
 
 import { useTheme } from "next-themes";
 import { motion } from "framer-motion";
-import { useEffect, useState } from "react";
 
 export function ThemeToggle() {
-  const { resolvedTheme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    queueMicrotask(() => setMounted(true));
-  }, []);
-
-  if (!mounted) {
-    return (
-      <div className="h-10 w-10 rounded-full bg-zinc-200 dark:bg-zinc-800" />
-    );
-  }
+  const { theme, setTheme } = useTheme();
 
   return (
     <motion.button
-      onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
-      className="relative flex h-10 w-10 items-center justify-center rounded-full bg-zinc-200 dark:bg-zinc-800 transition-colors hover:bg-zinc-300 dark:hover:bg-zinc-700"
+      onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+      className="relative flex h-10 w-10 items-center justify-center rounded-full bg-zinc-200 dark:bg-zinc-800 transition-colors hover:bg-zinc-300 dark:hover:bg-zinc-700 light:text-zinc-300 dark:text-zinc-200"
       whileHover={{ scale: 1.05 }}
       whileTap={{ scale: 0.95 }}
       aria-label="Toggle theme"
@@ -38,12 +26,12 @@ export function ThemeToggle() {
         strokeLinejoin="round"
         initial={false}
         animate={{
-          rotate: resolvedTheme === "dark" ? 0 : 40,
+          rotate: theme === "dark" ? 0 : 40,
           opacity: 1,
         }}
         transition={{ duration: 0.3 }}
       >
-        {resolvedTheme === "dark" ? (
+        {theme === "dark" ? (
           <>
             <circle cx="12" cy="12" r="4" />
             <path d="M12 2v2" />

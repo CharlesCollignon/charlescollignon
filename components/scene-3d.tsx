@@ -6,12 +6,14 @@ import { Environment } from "@react-three/drei";
 import Spline from "@splinetool/react-spline";
 import type { Application } from "@splinetool/runtime";
 import * as THREE from "three";
+import { useTheme } from "next-themes";
 
 const SCENE_URL =
   "https://prod.spline.design/wBbmkii5XDthay9E/scene.splinecode";
 
 export function Scene3D() {
   const splineRef = useRef<Application | null>(null);
+  const { theme } = useTheme();
 
   function onLoad(spline: Application) {
     splineRef.current = spline;
@@ -168,7 +170,7 @@ export function Scene3D() {
           style={{
             width: "100%",
             height: "100%",
-            backgroundColor: "transparent",
+            backgroundColor: theme === "dark" ? "#0c0c0c" : "#ebebeb",
           }}
         />
       </Suspense>
@@ -238,7 +240,7 @@ function BackgroundFloatingObject({
       <meshPhysicalMaterial
         color="#3b82f6"
         emissive="#1d4ed8"
-        emissiveIntensity={0.2}
+        emissiveIntensity={0.8}
         {...materialProps}
       />
     </mesh>

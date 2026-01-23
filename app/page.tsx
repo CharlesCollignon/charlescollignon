@@ -78,10 +78,8 @@ export default function Home() {
             </FadeIn>
 
             <FadeIn delay={0.4}>
-              <h1 className="mb-6 text-center text-4xl font-bold tracking-tight sm:text-5xl md:text-7xl lg:text-8xl text-zinc-300 dark:text-zinc-200 mix-blend-difference">
-                Charles
-                <br />
-                Collignon
+              <h1 className="mb-6 text-center text-4xl tracking-normal sm:text-5xl md:text-7xl lg:text-8xl text-zinc-300 dark:text-zinc-200 mix-blend-difference">
+                Charles Collignon
               </h1>
             </FadeIn>
 

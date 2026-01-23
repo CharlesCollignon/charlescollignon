@@ -32,15 +32,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${figtree.variable} font-sans antialiased`}>
-        <Analytics />
-        <SpeedInsights />
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="dark"
-          enableSystem
-          disableTransitionOnChange
-        >
+      <body
+        className={`${figtree.variable} font-sans antialiased`}
+        suppressHydrationWarning
+      >
+        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
+          <SpeedInsights />
+          <Analytics />
           {children}
         </ThemeProvider>
       </body>
