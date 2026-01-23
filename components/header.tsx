@@ -1,15 +1,17 @@
 "use client";
 
-import { motion } from "framer-motion";
 import { ThemeToggle } from "./theme-toggle";
 import { HoverLink } from "./animations";
+import FadeContent from "@/components/FadeContent";
 
 export function Header() {
   return (
-    <motion.header
-      initial={{ opacity: 0, y: -20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6, ease: [0.21, 0.47, 0.32, 0.98] }}
+    <FadeContent
+      blur={true}
+      delay={5000}
+      duration={2000}
+      ease="ease-out"
+      initialOpacity={0}
       className="fixed top-4 inset-x-0 z-50 md:px-12 backdrop-blur-md p-2 w-min mx-auto rounded-2xl"
     >
       <nav className="flex items-center justify-center w-full">
@@ -37,6 +39,6 @@ export function Header() {
           <ThemeToggle />
         </div>
       </nav>
-    </motion.header>
+    </FadeContent>
   );
 }

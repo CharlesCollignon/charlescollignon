@@ -3,13 +3,13 @@
 import { Scene3D } from "@/components/scene-3d";
 import { Header } from "@/components/header";
 import {
-  FadeIn,
   StaggerContainer,
   StaggerItem,
   HoverLink,
   Magnetic,
 } from "@/components/animations";
-import { TextType } from "@/components/text-type";
+import FadeContent from "@/components/FadeContent";
+import TextType from "@/components/TextType";
 import { motion } from "framer-motion";
 import Link from "next/link";
 
@@ -70,38 +70,63 @@ export default function Home() {
       <main className="relative w-full">
         <section className="flex min-h-screen flex-col items-center justify-center px-6 md:px-12 lg:px-16">
           <div className="mx-auto w-full max-w-6xl">
-            <FadeIn delay={0.2}>
+            <FadeContent
+              blur={true}
+              delay={2000}
+              duration={2000}
+              ease="ease-out"
+              initialOpacity={0}
+            >
               <p className="mb-4 text-center text-sm font-medium uppercase tracking-widest text-zinc-300 dark:text-zinc-400 mix-blend-difference">
                 Senior Frontend Developer & UI/UX Designer
               </p>
-            </FadeIn>
+            </FadeContent>
 
-            <FadeIn delay={0.4}>
-              <h1 className="mb-6 text-center text-4xl tracking-normal sm:text-5xl md:text-7xl lg:text-8xl text-zinc-300 dark:text-zinc-200 mix-blend-difference">
+            <FadeContent
+              blur={true}
+              delay={3000}
+              duration={2000}
+              ease="ease-out"
+              initialOpacity={0}
+            >
+              <div className="mb-6 text-center text-4xl tracking-normal sm:text-5xl md:text-7xl lg:text-8xl text-zinc-300 dark:text-zinc-200 mix-blend-difference">
                 Charles Collignon
-              </h1>
-            </FadeIn>
+              </div>
+            </FadeContent>
 
             <div className="flex justify-center px-4">
               <div className="max-w-xl text-center text-base  md:text-lg lg:text-xl min-h-15 md:min-h-17.5 flex items-center justify-center">
-                <TextType
-                  texts={[
-                    "I craft beautiful, performant web experiences.",
-                    "Focused on interaction design and cutting-edge technologies.",
-                    "Building the future of web development.",
-                  ]}
-                  typingSpeed={75}
-                  deletingSpeed={50}
-                  pauseDuration={2000}
-                  showCursor
-                  cursorCharacter="|"
-                  cursorBlinkDuration={0.7}
-                  className="text-base text-zinc-300 dark:text-zinc-200 md:text-lg lg:text-xl mix-blend-difference"
-                />
+                <FadeContent
+                  delay={4000}
+                  duration={2000}
+                  ease="ease-out"
+                  initialOpacity={0}
+                >
+                  <TextType
+                    text={[
+                      "I craft beautiful, performant web experiences.",
+                      "Focused on interaction design and cutting-edge technologies.",
+                      "Building the future of web development.",
+                    ]}
+                    initialDelay={4000}
+                    typingSpeed={75}
+                    deletingSpeed={50}
+                    pauseDuration={2000}
+                    showCursor
+                    cursorCharacter="_"
+                    cursorBlinkDuration={0.7}
+                    className="text-base text-zinc-300 dark:text-zinc-200 md:text-lg lg:text-xl mix-blend-difference"
+                  />
+                </FadeContent>
               </div>
             </div>
 
-            <FadeIn delay={1}>
+            <FadeContent
+              delay={5000}
+              duration={2000}
+              ease="ease-out"
+              initialOpacity={0}
+            >
               <div className="flex flex-wrap items-center justify-center gap-3 mt-8 md:mt-12 md:gap-4">
                 <Magnetic>
                   <Link
@@ -120,7 +145,7 @@ export default function Home() {
                   </Link>
                 </Magnetic>
               </div>
-            </FadeIn>
+            </FadeContent>
           </div>
         </section>
 
@@ -131,7 +156,7 @@ export default function Home() {
         >
           <div className="mx-auto max-w-6xl">
             <div className="flex flex-col items-center gap-12 md:gap-16">
-              <FadeIn>
+              <FadeContent>
                 <div className="flex flex-col items-center justify-center text-center">
                   <p className="text-sm font-medium uppercase tracking-widest text-zinc-900 dark:text-zinc-400">
                     About
@@ -142,7 +167,7 @@ export default function Home() {
                     experiences
                   </h2>
                 </div>
-              </FadeIn>
+              </FadeContent>
 
               {/* Skills */}
               <StaggerContainer
@@ -158,7 +183,7 @@ export default function Home() {
                 ))}
               </StaggerContainer>
 
-              <FadeIn delay={0.2}>
+              <FadeContent delay={0.2}>
                 <div className="flex flex-col items-center justify-center space-y-6 text-center text-zinc-900 dark:text-zinc-400 max-w-2xl">
                   <p>
                     I&apos;m a senior frontend developer and UI/UX designer with
@@ -172,7 +197,7 @@ export default function Home() {
                     applications that deliver exceptional user experiences.
                   </p>
                 </div>
-              </FadeIn>
+              </FadeContent>
             </div>
           </div>
         </section>
@@ -183,7 +208,7 @@ export default function Home() {
           className="min-h-screen w-full px-6 md:px-12 lg:px-16 flex items-center justify-center"
         >
           <div className="mx-auto max-w-6xl flex flex-col gap-4">
-            <FadeIn>
+            <FadeContent>
               <div className="flex flex-col items-center justify-center text-center">
                 <p className="text-sm font-medium uppercase tracking-widest text-zinc-900 dark:text-zinc-400">
                   Selected Work
@@ -192,12 +217,12 @@ export default function Home() {
                   Projects
                 </h2>
               </div>
-            </FadeIn>
+            </FadeContent>
 
             <div className="mt-8 md:mt-12 flex justify-center w-full">
               <div className="grid gap-8 md:grid-cols-2 md:gap-8 w-full">
                 {projects.map((project, i) => (
-                  <FadeIn key={project.title} delay={i * 0.1}>
+                  <FadeContent key={project.title} delay={i * 0.1}>
                     <div>
                       {/* Title and description above the block */}
                       <div className="mb-3 md:mb-4">
@@ -270,7 +295,7 @@ export default function Home() {
                         </motion.a>
                       </Magnetic>
                     </div>
-                  </FadeIn>
+                  </FadeContent>
                 ))}
               </div>
             </div>
@@ -283,7 +308,7 @@ export default function Home() {
           className="min-h-screen flex items-center justify-center px-6 md:px-12 lg:px-16"
         >
           <div className="mx-auto flex gap-4 flex-col items-center text-center">
-            <FadeIn>
+            <FadeContent>
               <div className="flex flex-col items-center justify-center text-center ">
                 <p className="text-sm font-medium uppercase tracking-widest text-zinc-900 dark:text-zinc-400">
                   Contact
@@ -294,9 +319,9 @@ export default function Home() {
                   together
                 </h2>
               </div>
-            </FadeIn>
+            </FadeContent>
 
-            <FadeIn delay={0.2}>
+            <FadeContent delay={0.2}>
               <div className="mt-8 md:mt-12 flex justify-center text-center px-4">
                 <Magnetic>
                   <a
@@ -307,9 +332,9 @@ export default function Home() {
                   </a>
                 </Magnetic>
               </div>
-            </FadeIn>
+            </FadeContent>
 
-            <FadeIn delay={0.3}>
+            <FadeContent delay={0.3}>
               <div className="mt-8 md:mt-12 flex items-center justify-center gap-6 md:gap-8">
                 {socialLinks.map((link) => (
                   <HoverLink
@@ -322,7 +347,7 @@ export default function Home() {
                   </HoverLink>
                 ))}
               </div>
-            </FadeIn>
+            </FadeContent>
           </div>
         </section>
 
