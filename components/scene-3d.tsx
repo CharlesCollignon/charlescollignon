@@ -85,7 +85,7 @@ export function Scene3D() {
       // Hero (0,0,1200) -> About (600,0,1600) -> Work (-500,100,700) -> Contact (0,0,1200)
       const states = [
         { x: 0, y: 160, z: 900 },
-        { x: 0, y: 50, z: 8000 },
+        { x: 0, y: -340, z: 12000 },
         { x: -50, y: 280, z: 200 },
         { x: 0, y: 160, z: 900 },
       ];
@@ -149,17 +149,14 @@ export function Scene3D() {
     <div
       className="fixed inset-0 h-screen w-screen"
       style={{
-        backgroundColor: "transparent",
         zIndex: -10,
         pointerEvents: "none",
+        backgroundColor: theme === "dark" ? "#000000" : "#ffffff",
       }}
     >
       <Suspense
         fallback={
-          <div
-            className="w-full h-full flex items-center justify-center text-zinc-500"
-            style={{ backgroundColor: "transparent" }}
-          >
+          <div className="w-full h-full flex items-center justify-center text-zinc-500">
             Loading 3D Scene...
           </div>
         }
@@ -170,9 +167,9 @@ export function Scene3D() {
           style={{
             width: "100%",
             height: "100%",
-            backgroundColor: theme === "dark" ? "#0c0c0c" : "#ebebeb",
           }}
-        />
+        />{" "}
+        <ForegroundScene3D />
       </Suspense>
     </div>
   );
@@ -224,7 +221,7 @@ function BackgroundFloatingObject({
 
   const materialProps = {
     roughness: 0.1,
-    metalness: 0.2,
+    metalness: 0.7,
     clearcoat: 1,
     clearcoatRoughness: 0.1,
     iridescence: 1,
@@ -240,7 +237,7 @@ function BackgroundFloatingObject({
       <meshPhysicalMaterial
         color="#3b82f6"
         emissive="#1d4ed8"
-        emissiveIntensity={0.8}
+        emissiveIntensity={0.2}
         {...materialProps}
       />
     </mesh>

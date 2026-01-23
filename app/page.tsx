@@ -1,6 +1,6 @@
 "use client";
 
-import { Scene3D, ForegroundScene3D } from "@/components/scene-3d";
+import { Scene3D } from "@/components/scene-3d";
 import { Header } from "@/components/header";
 import {
   FadeIn,
@@ -65,7 +65,6 @@ export default function Home() {
   return (
     <>
       <Scene3D />
-      <ForegroundScene3D />
       <Header />
 
       <main className="relative w-full">
