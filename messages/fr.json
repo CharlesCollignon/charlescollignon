@@ -62,5 +62,199 @@
   "footer": {
     "rights": "Tous droits réservés.",
     "built": "Construit avec Next.js, Spline, GSAP et Motion"
+  },
+  "caseStudy": {
+    "role": "Rôle",
+    "year": "Année",
+    "stack": "Technologies",
+    "visit": "Voir le site",
+    "source": "Code source",
+    "challenge": "Le problème",
+    "approach": "L'approche",
+    "highlights": "Points forts",
+    "inNumbers": "En chiffres",
+    "gallery": "Écrans",
+    "outcome": "Aujourd'hui",
+    "next": "Projet suivant",
+    "back": "Tous les projets",
+    "private": "Plateforme privée"
+  },
+  "caseStudies": {
+    "phronesis": {
+      "role": "Projet personnel : produit, design et développement",
+      "intro": "Phronesis est une plateforme civique neutre. Elle croise les données ouvertes de l'Assemblée nationale et du Sénat pour que chacun puisse suivre les lois, les votes et ses élus, puis se faire sa propre opinion.",
+      "challenge": "Les données parlementaires sont publiques mais presque illisibles : des milliers de textes, des dizaines de milliers d'amendements et des millions de votes individuels, répartis entre deux chambres. La plupart des outils qui les rendent lisibles vous disent aussi quoi en penser.",
+      "approach": "J'ai construit Phronesis autour d'une règle : comprendre avant de juger. L'interface ne note personne, ne recommande aucun vote et n'utilise jamais le rouge ou le vert pour « pour » et « contre ». Chaque résumé IA est affiché à côté du texte officiel, et une page de méthodologie publique explique chaque calcul.",
+      "highlights": {
+        "hemicycle": {
+          "title": "Un hémicycle vivant",
+          "body": "Un hémicycle SVG sur mesure dessine chaque chambre aux couleurs officielles des groupes. Survoler un groupe estompe les autres, chaque arc mène à la page du groupe, et chaque scrutin redessine la chambre siège par siège."
+        },
+        "compass": {
+          "title": "La Boussole des valeurs",
+          "body": "19 dilemmes placent les réponses sur une dizaine d'axes de valeurs plutôt que sur une seule ligne gauche–droite. Le profil reste dans le navigateur ou se synchronise avec un compte, et « Résonance » le compare à l'empreinte d'un texte par similarité cosinus."
+        },
+        "neutral": {
+          "title": "Conçu pour la confiance",
+          "body": "Un style « Carnet » noir, blanc et un seul jaune, aux angles droits. Les couleurs de vote sont volontairement monochromes, le texte IA est signalé et toujours affiché à côté de sa source, et les animations respectent le réglage « réduire les animations »."
+        },
+        "cache": {
+          "title": "Peu coûteux, rapide à lire",
+          "body": "L'IA ne tourne que dans des traitements par lots hors ligne, jamais à la requête. Un cache de données Next.js par tags survit aux déploiements et l'import hebdomadaire le vide, si bien que la base de données se réveille rarement."
+        },
+        "seo": {
+          "title": "Fait pour être partagé",
+          "body": "Chaque page a ses propres métadonnées, son URL canonique et son JSON-LD. Des sitemaps par route et des images Open Graph générées pour chaque texte et chaque scrutin gardent les liens lisibles partout où ils sont partagés."
+        }
+      },
+      "metrics": {
+        "bills": "dossiers législatifs suivis",
+        "votes": "scrutins publics",
+        "positions": "positions de vote individuelles",
+        "dilemmas": "dilemmes de valeurs"
+      },
+      "shots": {
+        "vote": "Un scrutin du Sénat, redessiné siège par siège",
+        "bill": "Un texte : résumé clair à côté du texte officiel",
+        "compass": "La Boussole : des dilemmes plutôt qu'un score gauche–droite",
+        "groups": "Les groupes parlementaires et leur part des sièges",
+        "officials": "Tous les députés et sénateurs, consultables",
+        "mobileHome": "Accueil",
+        "mobileVote": "Un scrutin",
+        "mobileCompass": "La Boussole",
+        "mobileBill": "Un texte"
+      },
+      "outcome": "En ligne sur phronesis-france.com et open source sous licence MIT, avec un import de données chaque semaine et des traitements IA chaque mois via GitHub Actions."
+    },
+    "pluclair": {
+      "role": "Projet personnel : produit, design et développement",
+      "intro": "Pluclair est une application gratuite de finances personnelles pour la France : revenus, dépenses, épargne et placements dans un seul carnet serein, sur le web et Android, seul ou en couple.",
+      "challenge": "Les applis de budget demandent soit un accès complet à votre banque, soit s'éloignent de la réalité en quelques semaines. Pluclair devait rester juste sans se connecter à aucune banque, et gérer les spécificités françaises : fiscalité, épargne réglementée, PEA et CTO, immobilier et crédits.",
+      "approach": "Chaque mois, vous saisissez le vrai solde de fin de mois de votre banque, et Pluclair rapproche le mois de ce chiffre. Les dépenses jamais saisies apparaissent comme un écart mesuré plutôt qu'une erreur silencieuse. L'interface, « The Quiet Ledger », reste sombre et calme pour que la seule chose lumineuse à l'écran soit le chiffre qui compte.",
+      "highlights": {
+        "ask": {
+          "title": "Un chat qui vérifie ses propres chiffres",
+          "body": "Ask Pluclair répond en appelant 11 outils sur vos vraies données. Tout montant de sa réponse que les outils n'ont jamais renvoyé est souligné en pointillés : un chiffre inventé se voit au premier coup d'œil. Chacun utilise sa propre clé de modèle."
+        },
+        "statements": {
+          "title": "Un lecteur de relevés juste au centime",
+          "body": "Il lit le CSV de toutes les banques françaises, XLSX et ODS, OFX et QIF, CAMT, MT940, CFONB et PDF, puis vérifie les lignes contre les soldes d'ouverture et de clôture du relevé lui-même."
+        },
+        "light": {
+          "title": "Éclairé par l'arrière",
+          "body": "Une lumière colorée brille derrière chaque écran sous un voile WebGL lent, avec des cartes dépolies par-dessus et un seul accent orange. Le logo orbe est en CSS pur : il ne coûte aucun JavaScript."
+        },
+        "couples": {
+          "title": "Un espace partagé pour les couples",
+          "body": "Un espace partagé possède ses données comme une personne, protégé par la sécurité au niveau des lignes de Postgres, avec la part de chacun et le solde courant entre les deux."
+        },
+        "year": {
+          "title": "Votre année, racontée",
+          "body": "Un bilan de fin d'année en cartes façon stories, chacune exportable en image à partager."
+        }
+      },
+      "metrics": {
+        "commits": "commits depuis juin 2026",
+        "modules": "modules métier en TypeScript pur, partagés par le web et le mobile",
+        "formats": "formats de relevés bancaires",
+        "platforms": "plateformes : web et Android"
+      },
+      "shots": {
+        "bearing": "Le point : le mois en un coup d'œil",
+        "calendar": "Le journal en calendrier",
+        "history": "Ce qui a bougé, par catégorie",
+        "plan": "Où vos comptes pourraient aller, d'après les marchés depuis 1970",
+        "recurring": "Ce qui est déjà engagé chaque mois",
+        "analysis": "Le rendement des placements, expliqué",
+        "transactions": "Les opérations, importées d'un relevé",
+        "mobileBearing": "Le point",
+        "mobileCalendar": "Calendrier",
+        "mobileHistory": "Historique",
+        "mobilePlan": "Plan",
+        "mobileAnalysis": "Rendement",
+        "mobileRecurring": "Récurrents"
+      },
+      "outcome": "En ligne sur pluclair.com avec un compte de démonstration en lecture seule. Un seul monorepo pnpm livre l'application web Next.js et l'application Android Expo à partir du même code métier et du même backend Supabase."
+    },
+    "mip": {
+      "role": "Responsable design et ingénierie frontend chez QuantCube Technology",
+      "intro": "La Macro Intelligence Platform fournit chaque jour des nowcasts macroéconomiques aux analystes institutionnels : PIB, inflation, commerce, ports, pollution, trafic urbain et plus encore, à partir de données alternatives. J'ai dirigé sa refonte complète, du design system jusqu'à l'architecture.",
+      "challenge": "L'ancienne plateforme avait grossi d'un dossier copié par module de données : 33 au total, environ 640 fichiers et 80 000 lignes de code presque identiques. Chaque nouveau module demandait une nouvelle copie, et chaque changement de design devait être fait 33 fois.",
+      "approach": "J'ai remplacé les copies par un seul moteur piloté par configuration. Chaque module est désormais une unique configuration defineModule() qui décrit ses données, filtres, vues et exports. Une seule route affiche n'importe quel module, et la même configuration alimente le menu, les tableaux de bord et les exports. Autour, j'ai construit un design system à base de tokens, avec un vrai mode sombre et une mise en page mobile dédiée.",
+      "notice": "La plateforme est privée : les visuels ci-dessous sont des schémas redessinés, pas des captures d'écran. Ils ne contiennent aucune donnée client.",
+      "highlights": {
+        "engine": {
+          "title": "Un moteur, 32 modules",
+          "body": "Les modules sont déclarés, pas codés. En ajouter un demande désormais une configuration, des clés de traduction et des tests, au lieu d'un nouveau dossier de pages, de stores et de code serveur."
+        },
+        "views": {
+          "title": "Huit façons de lire une série",
+          "body": "Des graphiques, des tableaux et six types de cartes (régionale, tensions, heatmap, trafic, ville et sites), tous pilotés par la même configuration, avec des exports CSV, Excel, JSON et image."
+        },
+        "system": {
+          "title": "Un design system à base de tokens",
+          "body": "228 tokens de design, un contraste WCAG AA, une échelle d'animation et un vrai mode sombre. Changer de thème déclenche un dévoilement circulaire avec l'API View Transitions, et les couleurs des graphiques viennent des mêmes tokens : ECharts reste toujours raccord avec l'interface."
+        },
+        "phone": {
+          "title": "Pensé aussi pour le mobile",
+          "body": "Sur ordinateur, une barre d'onglets « notch » pend du cadre de l'application, avec une pastille qui glisse sous l'onglet actif. Sur téléphone, elle devient une barre du bas qui se masque au défilement, avec des panneaux à glisser pour les filtres."
+        },
+        "horizon": {
+          "title": "Une connexion qui vaut l'attente",
+          "body": "La page de connexion dessine un horizon planétaire sur un canvas 2D : une Terre Blue Marble qui tourne, un soleil levant et 1 800 étoiles en mode sombre, un globe gris parcouru de flux de données rouges en mode clair. Elle reste immobile quand les animations sont réduites."
+        },
+        "performance": {
+          "title": "Rapide par défaut",
+          "body": "ECharts, MapLibre, l'éditeur et les outils d'export ne se chargent que lorsqu'une page en a besoin, et chaque route a son propre bundle. ECharts est réduit aux cinq types de graphiques réellement utilisés."
+        }
+      },
+      "metrics": {
+        "modules": "modules de données",
+        "categories": "catégories",
+        "views": "types de vues",
+        "files": "de fichiers de code des modules par rapport à l'ancienne plateforme",
+        "tests": "tests automatisés",
+        "keys": "clés de traduction par langue"
+      },
+      "visuals": {
+        "engine": "Une configuration alimente toutes les surfaces",
+        "modules": "32 modules dans 11 catégories",
+        "anatomy": "Anatomie d'une page de module",
+        "beforeAfter": "Le code des modules, avant et après",
+        "horizon": "L'horizon de connexion"
+      },
+      "diagram": {
+        "config": "Configuration defineModule()",
+        "registry": "Registre",
+        "engine": "Moteur de modules",
+        "route": "Une seule route",
+        "views": "Vues",
+        "exports": "Exports",
+        "menu": "Menu",
+        "dashboards": "Tableaux de bord",
+        "before": "Avant : 33 dossiers copiés",
+        "after": "Après : un seul moteur",
+        "files": "fichiers",
+        "lines": "lignes",
+        "filters": "Filtres",
+        "entities": "Pays",
+        "tabs": "Onglets de vue",
+        "export": "Export",
+        "categories": {
+          "gdp": "PIB",
+          "consumption": "Consommation",
+          "inflation": "Inflation",
+          "employment": "Emploi",
+          "commodities": "Matières premières",
+          "industry": "Activité industrielle",
+          "investment": "Investissement",
+          "trade": "Commerce",
+          "risk": "Risque pays",
+          "regimes": "Régimes macro",
+          "urban": "Activité urbaine"
+        }
+      },
+      "outcome": "La plateforme reconstruite tourne sur TanStack Start, avec des couches d'architecture vérifiées par dependency-cruiser, 611 tests Vitest, et l'anglais et le français partout."
+    }
   }
 }

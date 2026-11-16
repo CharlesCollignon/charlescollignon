@@ -62,5 +62,199 @@
   "footer": {
     "rights": "All rights reserved.",
     "built": "Built with Next.js, Spline, GSAP and Motion"
+  },
+  "caseStudy": {
+    "role": "Role",
+    "year": "Year",
+    "stack": "Stack",
+    "visit": "Visit the site",
+    "source": "Source code",
+    "challenge": "The challenge",
+    "approach": "The approach",
+    "highlights": "Highlights",
+    "inNumbers": "In numbers",
+    "gallery": "Screens",
+    "outcome": "Where it stands",
+    "next": "Next project",
+    "back": "All work",
+    "private": "Private platform"
+  },
+  "caseStudies": {
+    "phronesis": {
+      "role": "Solo project: product, design and engineering",
+      "intro": "Phronesis is a neutral civic platform for France. It cross-references Assemblée nationale and Sénat open data so citizens can follow bills, votes and their representatives, then form their own opinion.",
+      "challenge": "Parliamentary data is public but close to unreadable: thousands of bills, tens of thousands of amendments and millions of individual votes, spread across two chambers. Most tools that make it readable also tell you what to think.",
+      "approach": "I built Phronesis around one rule: understand before you judge. The interface never scores anyone, never recommends a vote and never uses red or green for “for” and “against”. Every AI summary sits next to the official text, and a public methodology page explains every calculation.",
+      "highlights": {
+        "hemicycle": {
+          "title": "A living hemicycle",
+          "body": "A custom SVG hemicycle draws each chamber in official group colours. Hovering a group dims the others, every arc links to that group's page, and each vote page redraws the chamber seat by seat."
+        },
+        "compass": {
+          "title": "The Boussole values quiz",
+          "body": "19 dilemmas score answers on about ten value axes instead of a single left–right line. The profile stays in the browser or syncs to an account, and “Résonance” compares it with a bill's footprint using cosine similarity."
+        },
+        "neutral": {
+          "title": "Designed for trust",
+          "body": "A black, white and single-yellow “Carnet” style with square corners. Vote colours are deliberately monochrome, AI text is labelled and always shown beside its source, and motion respects reduced-motion settings."
+        },
+        "cache": {
+          "title": "Cheap to run, fast to read",
+          "body": "AI only runs in offline batch jobs, never at request time. A tag-based Next.js data cache survives deployments and the weekly import clears it, so the database rarely has to wake up."
+        },
+        "seo": {
+          "title": "Built to be shared",
+          "body": "Every page has its own metadata, canonical URL and JSON-LD. Per-route sitemaps and Open Graph images generated for each bill and vote keep links readable wherever they are posted."
+        }
+      },
+      "metrics": {
+        "bills": "bills tracked",
+        "votes": "public votes",
+        "positions": "individual vote positions",
+        "dilemmas": "values dilemmas"
+      },
+      "shots": {
+        "vote": "A Senate vote, redrawn seat by seat",
+        "bill": "A bill: plain-language summary beside the official text",
+        "compass": "The Boussole: dilemmas instead of a left–right score",
+        "groups": "Parliamentary groups and their share of seats",
+        "officials": "Every deputy and senator, searchable",
+        "mobileHome": "Home",
+        "mobileVote": "A vote",
+        "mobileCompass": "The Boussole",
+        "mobileBill": "A bill"
+      },
+      "outcome": "Live at phronesis-france.com and open source under the MIT licence, with weekly data imports and monthly AI jobs running on GitHub Actions."
+    },
+    "pluclair": {
+      "role": "Solo project: product, design and engineering",
+      "intro": "Pluclair is a free personal-finance app for France: income, spending, savings and investments in one calm ledger, on the web and Android, for individuals and couples.",
+      "challenge": "Budget apps either need full access to your bank or drift away from reality within weeks. Pluclair had to stay accurate without connecting to anyone's bank, and handle French specifics: tax rules, regulated savings, PEA and CTO accounts, property and loans.",
+      "approach": "Each month you type in the real closing balance from your bank, and Pluclair reconciles the month against it. Spending you never recorded shows up as a measured gap instead of a silent error. The interface, “The Quiet Ledger”, stays dark and still so the only bright thing on screen is the figure that matters.",
+      "highlights": {
+        "ask": {
+          "title": "A chat that checks its own numbers",
+          "body": "Ask Pluclair answers by calling 11 tools on your real data. Any amount in its answer that the tools never returned gets a dotted underline, so an invented number is visible at a glance. Users bring their own model key."
+        },
+        "statements": {
+          "title": "A statement reader that balances to the cent",
+          "body": "It reads CSV in every French bank's flavour, XLSX and ODS, OFX and QIF, CAMT, MT940, CFONB and PDF, then checks the lines against the statement's own opening and closing balances."
+        },
+        "light": {
+          "title": "Lit from behind",
+          "body": "A coloured light glows behind every screen under a slow WebGL veil, with frosted cards on top and a single orange accent. The orb logo is pure CSS, so it costs no JavaScript."
+        },
+        "couples": {
+          "title": "A shared space for couples",
+          "body": "A shared space owns records the way a person does, protected by Postgres row-level security, with each partner's share and a running balance between them."
+        },
+        "year": {
+          "title": "Your year, as a story",
+          "body": "An end-of-year recap told in story-style cards, each one exportable as a shareable image."
+        }
+      },
+      "metrics": {
+        "commits": "commits since June 2026",
+        "modules": "pure TypeScript domain modules, shared by web and mobile",
+        "formats": "bank statement formats",
+        "platforms": "platforms: web and Android"
+      },
+      "shots": {
+        "bearing": "Le point: the month at a glance",
+        "calendar": "The ledger as a calendar",
+        "history": "What moved, by category",
+        "plan": "Where your accounts could go, from market history since 1970",
+        "recurring": "What is already committed each month",
+        "analysis": "Investment returns, explained",
+        "transactions": "Transactions, imported from a statement",
+        "mobileBearing": "Le point",
+        "mobileCalendar": "Calendar",
+        "mobileHistory": "History",
+        "mobilePlan": "Plan",
+        "mobileAnalysis": "Returns",
+        "mobileRecurring": "Recurring"
+      },
+      "outcome": "Live at pluclair.com with a read-only demo account. One pnpm monorepo ships the Next.js web app and the Expo Android app from the same domain code and the same Supabase backend."
+    },
+    "mip": {
+      "role": "Lead, design and frontend engineering at QuantCube Technology",
+      "intro": "The Macro Intelligence Platform delivers daily macroeconomic nowcasts to institutional analysts: GDP, inflation, trade, ports, pollution, urban traffic and more, built from alternative data. I led its complete rebuild, from the design system to the architecture.",
+      "challenge": "The previous platform had grown one copied folder per data module: 33 of them, around 640 files and 80,000 lines of near-identical code. Every new module meant another copy, and every design change had to be made 33 times.",
+      "approach": "I replaced the copies with one config-driven engine. Each module is now a single defineModule() configuration describing its data, filters, views and exports. One route renders any module, and the same config feeds the menu, dashboards and exports. Around it I built a token-driven design system with a real dark mode and a phone layout of its own.",
+      "notice": "The platform is private, so the visuals here are redrawn diagrams, not screenshots. They contain no client data.",
+      "highlights": {
+        "engine": {
+          "title": "One engine, 32 modules",
+          "body": "Modules are declared, not coded. Adding one now takes a config, translation keys and tests, instead of a new folder of pages, stores and server code."
+        },
+        "views": {
+          "title": "Eight ways to read a series",
+          "body": "Charts, tables and six kinds of maps (regional, tension, heatmap, traffic, city and sites), all driven by the same config, with exports to CSV, Excel, JSON and image."
+        },
+        "system": {
+          "title": "A token-driven design system",
+          "body": "228 design tokens, WCAG AA contrast, a motion scale and a real dark mode. Switching theme plays a circular reveal with the View Transitions API, and chart colours come from the same tokens so ECharts always matches the interface."
+        },
+        "phone": {
+          "title": "Built for phones too",
+          "body": "On desktop a “notch” tab bar hangs from the app frame, with a pill that slides under the active tab. On phones it becomes a bottom bar that hides on scroll, with draggable bottom sheets for filters."
+        },
+        "horizon": {
+          "title": "A sign-in worth the wait",
+          "body": "The login page draws a planet horizon on a 2D canvas: a turning Blue Marble Earth, a rising sun and 1,800 stars in dark mode, a grey globe with red data flows in light mode. It holds still when reduced motion is on."
+        },
+        "performance": {
+          "title": "Fast by default",
+          "body": "ECharts, MapLibre, the editor and the export tools only load when a page needs them, and each route ships its own chunk. ECharts is trimmed to the five chart types the app actually uses."
+        }
+      },
+      "metrics": {
+        "modules": "data modules",
+        "categories": "categories",
+        "views": "view types",
+        "files": "module code files compared with the old platform",
+        "tests": "automated tests",
+        "keys": "translation keys per language"
+      },
+      "visuals": {
+        "engine": "One configuration feeds every surface",
+        "modules": "32 modules in 11 categories",
+        "anatomy": "Anatomy of a module page",
+        "beforeAfter": "Module code, before and after",
+        "horizon": "The sign-in horizon"
+      },
+      "diagram": {
+        "config": "defineModule() config",
+        "registry": "Registry",
+        "engine": "Module engine",
+        "route": "One route",
+        "views": "Views",
+        "exports": "Exports",
+        "menu": "Menu",
+        "dashboards": "Dashboards",
+        "before": "Before: 33 copied folders",
+        "after": "After: one engine",
+        "files": "files",
+        "lines": "lines",
+        "filters": "Filters",
+        "entities": "Countries",
+        "tabs": "View tabs",
+        "export": "Export",
+        "categories": {
+          "gdp": "GDP",
+          "consumption": "Consumption",
+          "inflation": "Inflation",
+          "employment": "Employment",
+          "commodities": "Commodities",
+          "industry": "Industrial activity",
+          "investment": "Investment",
+          "trade": "Trade",
+          "risk": "Country risk",
+          "regimes": "Macro regimes",
+          "urban": "Urban activity"
+        }
+      },
+      "outcome": "The rebuilt platform runs on TanStack Start, with architecture layers enforced by dependency-cruiser, 611 Vitest tests, and English and French throughout."
+    }
   }
 }
