@@ -1,6 +1,6 @@
 # Charles Collignon – Portfolio
 
-Welcome to my personal portfolio website! This is where I showcase my work as a Senior Frontend Developer & UI/UX Designer.
+Welcome to my personal portfolio website! This is where I showcase my work as a Engineering Manager, Design and Product.
 
 ## About This Portfolio
 

@@ -1,20 +1,25 @@
 "use client";
 
 import { useTheme } from "next-themes";
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 
+/**
+ * Both icons are rendered and swapped with the `dark:` variant, so the server
+ * markup never depends on the (client-only) resolved theme.
+ */
 export function ThemeToggle() {
-  const { theme, setTheme } = useTheme();
+  const { resolvedTheme, setTheme } = useTheme();
 
   return (
     <motion.button
-      onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-      className="relative flex h-10 w-10 items-center justify-center rounded-full bg-zinc-200 dark:bg-zinc-800 transition-colors hover:bg-zinc-300 dark:hover:bg-zinc-700 light:text-zinc-300 dark:text-zinc-200"
+      type="button"
+      onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
+      className="relative flex size-10 items-center justify-center rounded-full bg-zinc-200 text-zinc-700 transition-colors hover:bg-zinc-300 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
       whileHover={{ scale: 1.05 }}
       whileTap={{ scale: 0.95 }}
       aria-label="Toggle theme"
     >
-      <motion.svg
+      <svg
         xmlns="http://www.w3.org/2000/svg"
         width="20"
         height="20"
@@ -24,29 +29,34 @@ export function ThemeToggle() {
         strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"
-        initial={false}
-        animate={{
-          rotate: theme === "dark" ? 0 : 40,
-          opacity: 1,
-        }}
-        transition={{ duration: 0.3 }}
+        aria-hidden
+        className="hidden transition-transform duration-300 dark:block"
       >
-        {theme === "dark" ? (
-          <>
-            <circle cx="12" cy="12" r="4" />
-            <path d="M12 2v2" />
-            <path d="M12 20v2" />
-            <path d="m4.93 4.93 1.41 1.41" />
-            <path d="m17.66 17.66 1.41 1.41" />
-            <path d="M2 12h2" />
-            <path d="M20 12h2" />
-            <path d="m6.34 17.66-1.41 1.41" />
-            <path d="m19.07 4.93-1.41 1.41" />
-          </>
-        ) : (
-          <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
-        )}
-      </motion.svg>
+        <circle cx="12" cy="12" r="4" />
+        <path d="M12 2v2" />
+        <path d="M12 20v2" />
+        <path d="m4.93 4.93 1.41 1.41" />
+        <path d="m17.66 17.66 1.41 1.41" />
+        <path d="M2 12h2" />
+        <path d="M20 12h2" />
+        <path d="m6.34 17.66-1.41 1.41" />
+        <path d="m19.07 4.93-1.41 1.41" />
+      </svg>
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="20"
+        height="20"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden
+        className="block rotate-[40deg] dark:hidden"
+      >
+        <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
+      </svg>
     </motion.button>
   );
 }

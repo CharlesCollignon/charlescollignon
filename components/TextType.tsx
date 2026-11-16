@@ -5,7 +5,6 @@ import {
   useEffect,
   useRef,
   useState,
-  createElement,
   useMemo,
   useCallback,
 } from "react";
@@ -187,27 +186,28 @@ const TextType = ({
     hideCursorWhileTyping &&
     (currentCharIndex < textArray[currentTextIndex].length || isDeleting);
 
-  return createElement(
-    Component,
-    {
-      ref: containerRef,
-      className: `inline-block whitespace-pre-wrap tracking-tight ${className}`,
-      ...props,
-    },
-    <span
-      className="inline"
-      style={{ color: getCurrentTextColor() || "inherit" }}
+  return (
+    <Component
+      ref={containerRef}
+      className={`inline-block whitespace-pre-wrap tracking-tight ${className}`}
+      {...props}
     >
-      {displayedText}
-    </span>,
-    showCursor && (
       <span
-        ref={cursorRef}
-        className={`ml-1 inline-block opacity-100 ${shouldHideCursor ? "hidden" : ""} ${cursorClassName}`}
+        className="inline"
+        style={{ color: getCurrentTextColor() || "inherit" }}
       >
-        {cursorCharacter}
+        {displayedText}
       </span>
-    ),
+      {showCursor && (
+        <span
+          ref={cursorRef}
+          aria-hidden
+          className={`ml-1 inline-block opacity-100 ${shouldHideCursor ? "hidden" : ""} ${cursorClassName}`}
+        >
+          {cursorCharacter}
+        </span>
+      )}
+    </Component>
   );
 };
 

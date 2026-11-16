@@ -8,9 +8,9 @@ export function Header() {
   return (
     <FadeContent
       blur={true}
-      delay={5000}
-      duration={2000}
-      ease="ease-out"
+      delay={1.3}
+      duration={1.2}
+      ease="power2.out"
       initialOpacity={0}
       className="fixed top-4 inset-x-0 z-50 md:px-12 backdrop-blur-md p-2 w-min mx-auto rounded-2xl"
     >

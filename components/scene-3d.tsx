@@ -1,264 +1,187 @@
 "use client";
 
-import { useRef, useEffect, useState, Suspense } from "react";
+import { useRef, useEffect } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { Environment } from "@react-three/drei";
 import Spline from "@splinetool/react-spline";
-import type { Application } from "@splinetool/runtime";
-import * as THREE from "three";
-import { useTheme } from "next-themes";
+import type { Application, SPEObject } from "@splinetool/runtime";
+import type * as THREE from "three";
 
 const SCENE_URL =
   "https://prod.spline.design/wBbmkii5XDthay9E/scene.splinecode";
 
+const CAMERA_NAMES = [
+  "Camera 2",
+  "Camera",
+  "Personal Camera",
+  "Main Camera",
+  "Default Camera",
+];
+const GROUP_NAMES = ["Scene", "Group", "Robot", "Character"];
+
+/** Camera keyframes, one per viewport height of scroll: hero → about → work → contact. */
+const CAMERA_STATES = [
+  { x: 0, y: 160, z: 900 },
+  { x: 0, y: -340, z: 12000 },
+  { x: -50, y: 280, z: 200 },
+  { x: 0, y: 160, z: 900 },
+];
+
+const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
+const smoothstep = (t: number) => t * t * (3 - 2 * t);
+
+function findFirst(spline: Application, names: string[]) {
+  for (const name of names) {
+    const obj = spline.findObjectByName(name);
+    if (obj) return obj;
+  }
+  return undefined;
+}
+
 export function Scene3D() {
-  const splineRef = useRef<Application | null>(null);
-  const { theme } = useTheme();
+  const targetRef = useRef<{ obj: SPEObject; isCamera: boolean } | null>(null);
+  const applyRef = useRef<() => void>(() => {});
 
   function onLoad(spline: Application) {
-    splineRef.current = spline;
-    // Enable global events so Spline can receive mouse events even when behind other elements
+    // Let Spline receive pointer events even though it sits behind the page.
     spline.setGlobalEvents(true);
-  }
 
-  // Linear interpolation helper
-  function lerp(start: number, end: number, t: number) {
-    return start * (1 - t) + end * t;
+    const camera = findFirst(spline, CAMERA_NAMES);
+    const group = camera ? undefined : findFirst(spline, GROUP_NAMES);
+    const obj = camera ?? group;
+    if (!obj) {
+      console.warn("Scene3D: no camera or root group found in Spline scene");
+      return;
+    }
+    targetRef.current = { obj, isCamera: Boolean(camera) };
+    applyRef.current();
   }
 
   useEffect(() => {
-    // Scroll animation logic
-    const handleScrollAnimation = () => {
-      if (!splineRef.current) return;
-      const spline = splineRef.current;
+    let frame = 0;
 
-      // Find the Camera to animate
-      // Try multiple common names
-      // Strategy: Find explicit Camera OR fall back to moving the 'Scene'/'Group'
-      let targetObj =
-        spline.findObjectByName("Camera 2") ||
-        spline.findObjectByName("Camera") ||
-        spline.findObjectByName("Personal Camera") ||
-        spline.findObjectByName("Main Camera") ||
-        spline.findObjectByName("Default Camera");
+    const apply = () => {
+      frame = 0;
+      const target = targetRef.current;
+      if (!target) return;
 
-      let isCamera = true;
+      const progress = Math.max(0, window.scrollY / window.innerHeight);
+      const segment = Math.min(
+        Math.floor(progress),
+        CAMERA_STATES.length - 2,
+      );
+      const t = smoothstep(Math.min(progress - segment, 1));
+      const from = CAMERA_STATES[segment];
+      const to = CAMERA_STATES[segment + 1];
+      const x = lerp(from.x, to.x, t);
+      const y = lerp(from.y, to.y, t);
+      const z = lerp(from.z, to.z, t);
 
-      // Fallback: If no Camera, find the robot's head (which we know exists)
-      // and get the Root Group (Scene) to move that instead.
-      if (!targetObj) {
-        // Try finding "Scene" or "Group" directly
-        targetObj =
-          spline.findObjectByName("Scene") || spline.findObjectByName("Group");
-
-        if (!targetObj) {
-          // Try to use the Head as a reference to find the parent
-          const head =
-            spline.findObjectByName("Head") || spline.findObjectByName("head");
-          if (head) {
-            // Try to grab a parent if exposed, otherwise we are stuck directly modifying head?
-            // No, that would be weird.
-            // Let's assume there is an object named "Robot" or "Character".
-            targetObj =
-              spline.findObjectByName("Robot") ||
-              spline.findObjectByName("Character");
-          }
-        }
-
-        if (targetObj) {
-          isCamera = false;
-        }
-      }
-
-      if (!targetObj) {
-        if (Math.random() < 0.05)
-          console.warn("Scene3D: No target object found (Camera or Group)!");
-        return;
-      }
-
-      const h = window.innerHeight;
-      const scrollY = window.scrollY;
-
-      const progress = scrollY / h;
-
-      // Target Coordinates (for Camera)
-      // Hero (0,0,1200) -> About (600,0,1600) -> Work (-500,100,700) -> Contact (0,0,1200)
-      const states = [
-        { x: 0, y: 160, z: 900 },
-        { x: 0, y: -340, z: 12000 },
-        { x: -50, y: 280, z: 200 },
-        { x: 0, y: 160, z: 900 },
-      ];
-
-      const target = { ...states[0] };
-
-      if (progress < 1) {
-        const t = Math.min(progress, 1);
-        const easeT = t * t * (3 - 2 * t);
-        target.x = lerp(states[0].x, states[1].x, easeT);
-        target.y = lerp(states[0].y, states[1].y, easeT);
-        target.z = lerp(states[0].z, states[1].z, easeT);
-      } else if (progress < 2) {
-        const t = Math.min(progress - 1, 1);
-        const easeT = t * t * (3 - 2 * t);
-        target.x = lerp(states[1].x, states[2].x, easeT);
-        target.y = lerp(states[1].y, states[2].y, easeT);
-        target.z = lerp(states[1].z, states[2].z, easeT);
+      if (target.isCamera) {
+        target.obj.position.x = x;
+        target.obj.position.y = y;
+        target.obj.position.z = z;
       } else {
-        const t = Math.min(progress - 2, 1);
-        const easeT = t * t * (3 - 2 * t);
-        target.x = lerp(states[2].x, states[3].x, easeT);
-        target.y = lerp(states[2].y, states[3].y, easeT);
-        target.z = lerp(states[2].z, states[3].z, easeT);
-      }
-
-      // Apply transformation
-      if (isCamera) {
-        targetObj.position.x = target.x;
-        targetObj.position.y = target.y;
-        targetObj.position.z = target.z;
-      } else {
-        // Invert logic if moving the Object instead of Camera
-        // To make object appear "Right" (Camera Left), we move Object Right? No.
-        // Camera move Right (+X) -> Object appears Left.
-        // So if we want Object Left, we move Object to -X (Relative to Camera).
-        // Actually, if Camera moves +X, Object stays at 0.
-        // If Camera frozen at 0, and we want same view, we move Object -X.
-
-        targetObj.position.x = -target.x;
-        targetObj.position.y = -target.y;
-
-        // Z Logic:
-        // Camera at 1200 (default). Object at 0. Diff = 1200.
-        // Target Z = 1600 (Farther).
-        // Move Object to -400. (1200 - (-400) = 1600).
-        // So Object Z = DefaultCamZ - TargetZ.
-        // Assuming DefaultCamZ is around 1000-1200. Let's assume 1200 for math consistency.
-        targetObj.position.z = 1200 - target.z;
+        // Moving the scene instead of the camera: invert, assuming a default camera z of 1200.
+        target.obj.position.x = -x;
+        target.obj.position.y = -y;
+        target.obj.position.z = 1200 - z;
       }
     };
+    applyRef.current = apply;
 
-    window.addEventListener("scroll", handleScrollAnimation);
-    // Trigger once on mount
-    handleScrollAnimation();
+    const onScroll = () => {
+      if (!frame) frame = requestAnimationFrame(apply);
+    };
 
-    return () => window.removeEventListener("scroll", handleScrollAnimation);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll, { passive: true });
+    apply();
+
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+      cancelAnimationFrame(frame);
+    };
   }, []);
 
   return (
     <div
-      className="fixed inset-0 h-screen w-screen"
-      style={{
-        zIndex: -10,
-        pointerEvents: "none",
-        backgroundColor: theme === "dark" ? "#000000" : "#ffffff",
-      }}
+      aria-hidden
+      className="pointer-events-none fixed inset-0 -z-10 h-dvh w-screen bg-white dark:bg-black"
     >
-      <Suspense
-        fallback={
-          <div className="w-full h-full flex items-center justify-center text-zinc-500">
-            Loading 3D Scene...
-          </div>
-        }
-      >
-        <Spline
-          scene={SCENE_URL}
-          onLoad={onLoad}
-          style={{
-            width: "100%",
-            height: "100%",
-          }}
-        />{" "}
-        <ForegroundScene3D />
-      </Suspense>
+      <Spline scene={SCENE_URL} onLoad={onLoad} className="size-full" />
+      <ForegroundScene3D />
     </div>
   );
 }
 
-function BackgroundFloatingObject({
-  scrollY,
+function FloatingObject({
   onDepthChange,
 }: {
-  scrollY: number;
   onDepthChange: (front: boolean) => void;
 }) {
   const meshRef = useRef<THREE.Mesh>(null);
   const isFrontRef = useRef(true);
 
   useFrame((state) => {
-    if (!meshRef.current) return;
+    const mesh = meshRef.current;
+    if (!mesh) return;
 
     const t = state.clock.getElapsedTime();
-
-    // Random orbit parameters
-    const radiusX = 3.5 + Math.sin(t * 0.3) * 1.5; // Radius fluctuates
+    const radiusX = 3.5 + Math.sin(t * 0.3) * 1.5;
     const radiusZ = 2 + Math.cos(t * 0.2) * 1;
 
-    // Orbit around center (0,0)
-    meshRef.current.position.x = Math.sin(t * 0.4) * radiusX;
+    mesh.position.x = Math.sin(t * 0.4) * radiusX;
+    const z = Math.cos(t * 0.4) * radiusZ;
+    mesh.position.z = z;
 
-    // Simulate depth by moving in Z
-    const zPos = Math.cos(t * 0.4) * radiusZ;
-    meshRef.current.position.z = zPos;
-
-    // Check depth to toggle z-index
-    // If z > 0, it's in front. If z < 0, it's behind.
-    const isNowFront = zPos > 0;
-    if (isNowFront !== isFrontRef.current) {
-      isFrontRef.current = isNowFront;
-      onDepthChange(isNowFront);
+    const isFront = z > 0;
+    if (isFront !== isFrontRef.current) {
+      isFrontRef.current = isFront;
+      onDepthChange(isFront);
     }
 
-    // Vertical movement:
-    // Start at top (y=3) and move down with scroll
-    const scrollOffset = scrollY * 0.005;
-    meshRef.current.position.y = 3 - scrollOffset + Math.sin(t * 0.5) * 0.5;
-
-    // Random rotation
-    meshRef.current.rotation.x = t * 0.3;
-    meshRef.current.rotation.y = t * 0.2;
+    // Starts near the top and drifts down as the page scrolls.
+    mesh.position.y = 3 - window.scrollY * 0.005 + Math.sin(t * 0.5) * 0.5;
+    mesh.rotation.x = t * 0.3;
+    mesh.rotation.y = t * 0.2;
   });
-
-  const materialProps = {
-    roughness: 0.1,
-    metalness: 0.7,
-    clearcoat: 1,
-    clearcoatRoughness: 0.1,
-    iridescence: 1,
-    iridescenceIOR: 1.6,
-    iridescenceThicknessRange: [200, 1000] as [number, number],
-  };
 
   return (
     <mesh ref={meshRef} position={[0, 4, 0]}>
-      {" "}
-      {/* Start higher up */}
       <torusKnotGeometry args={[0.6, 0.2, 256, 64]} />
       <meshPhysicalMaterial
         color="#3b82f6"
         emissive="#1d4ed8"
         emissiveIntensity={0.2}
-        {...materialProps}
+        roughness={0.1}
+        metalness={0.7}
+        clearcoat={1}
+        clearcoatRoughness={0.1}
+        iridescence={1}
+        iridescenceIOR={1.6}
+        iridescenceThicknessMinimum={200}
+        iridescenceThicknessMaximum={1000}
       />
     </mesh>
   );
 }
 
-export function ForegroundScene3D() {
-  const [scrollY, setScrollY] = useState(0);
-  const [zIndex, setZIndex] = useState(-5); // Start in front
+function ForegroundScene3D() {
+  const layerRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    const handleScroll = () => {
-      setScrollY(window.scrollY);
-    };
-
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  // Swap the layer's z-index directly so depth changes don't re-render the canvas.
+  const onDepthChange = (front: boolean) => {
+    if (layerRef.current) layerRef.current.style.zIndex = front ? "-5" : "-20";
+  };
 
   return (
-    <div className="fixed inset-0 pointer-events-none" style={{ zIndex }}>
+    <div
+      ref={layerRef}
+      className="pointer-events-none fixed inset-0"
+      style={{ zIndex: -5 }}
+    >
       <Canvas
         camera={{ position: [0, 0, 8], fov: 50 }}
         dpr={[1, 2]}
@@ -267,10 +190,7 @@ export function ForegroundScene3D() {
         <ambientLight intensity={1} />
         <directionalLight position={[5, 2, 5]} intensity={1} />
         <Environment preset="city" />
-        <BackgroundFloatingObject
-          scrollY={scrollY}
-          onDepthChange={(front) => setZIndex(front ? -5 : -20)}
-        />
+        <FloatingObject onDepthChange={onDepthChange} />
       </Canvas>
     </div>
   );

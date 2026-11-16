@@ -10,7 +10,7 @@ import {
 } from "@/components/animations";
 import FadeContent from "@/components/FadeContent";
 import TextType from "@/components/TextType";
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 import Link from "next/link";
 
 const skills = [
@@ -67,39 +67,39 @@ export default function Home() {
       <Scene3D />
       <Header />
 
-      <main className="relative w-full">
+      <main id="main" className="relative w-full">
         <section className="flex min-h-screen flex-col items-center justify-center px-6 md:px-12 lg:px-16">
           <div className="mx-auto w-full max-w-6xl">
             <FadeContent
               blur={true}
-              delay={2000}
-              duration={2000}
-              ease="ease-out"
+              delay={0.2}
+              duration={1.2}
+              ease="power2.out"
               initialOpacity={0}
             >
               <p className="mb-4 text-center text-sm font-medium uppercase tracking-widest text-zinc-300 dark:text-zinc-400 mix-blend-difference">
-                Senior Frontend Developer & UI/UX Designer
+                Engineering Manager, Design and Product
               </p>
             </FadeContent>
 
             <FadeContent
               blur={true}
-              delay={3000}
-              duration={2000}
-              ease="ease-out"
+              delay={0.5}
+              duration={1.2}
+              ease="power2.out"
               initialOpacity={0}
             >
-              <div className="mb-6 text-center text-4xl tracking-normal sm:text-5xl md:text-7xl lg:text-8xl text-zinc-300 dark:text-zinc-200 mix-blend-difference">
+              <h1 className="mb-6 text-center text-4xl tracking-normal sm:text-5xl md:text-7xl lg:text-8xl text-zinc-300 dark:text-zinc-200 mix-blend-difference">
                 Charles Collignon
-              </div>
+              </h1>
             </FadeContent>
 
             <div className="flex justify-center px-4">
               <div className="max-w-xl text-center text-base  md:text-lg lg:text-xl min-h-15 md:min-h-17.5 flex items-center justify-center">
                 <FadeContent
-                  delay={4000}
-                  duration={2000}
-                  ease="ease-out"
+                  delay={0.9}
+                  duration={1.2}
+                  ease="power2.out"
                   initialOpacity={0}
                 >
                   <TextType
@@ -108,7 +108,7 @@ export default function Home() {
                       "Focused on interaction design and cutting-edge technologies.",
                       "Building the future of web development.",
                     ]}
-                    initialDelay={4000}
+                    initialDelay={900}
                     typingSpeed={75}
                     deletingSpeed={50}
                     pauseDuration={2000}
@@ -122,9 +122,9 @@ export default function Home() {
             </div>
 
             <FadeContent
-              delay={5000}
-              duration={2000}
-              ease="ease-out"
+              delay={1.3}
+              duration={1.2}
+              ease="power2.out"
               initialOpacity={0}
             >
               <div className="flex flex-wrap items-center justify-center gap-3 mt-8 md:mt-12 md:gap-4">
@@ -186,15 +186,14 @@ export default function Home() {
               <FadeContent delay={0.2}>
                 <div className="flex flex-col items-center justify-center space-y-6 text-center text-zinc-900 dark:text-zinc-400 max-w-2xl">
                   <p>
-                    I&apos;m a senior frontend developer and UI/UX designer with
-                    a passion for creating elegant, user-centered digital
-                    products. With expertise in modern web technologies, I bring
-                    ideas to life through clean code and thoughtful design.
+                    I&apos;m an engineering manager working across design and
+                    product. I take products from first sketch to production:
+                    interface, design system and the code that ships them.
                   </p>
                   <p>
-                    Currently leading frontend development and design at
-                    QuantCube Technology, where I focus on building scalable
-                    applications that deliver exceptional user experiences.
+                    At QuantCube Technology I lead design and frontend
+                    engineering for the Macro Intelligence Platform. On my own
+                    time I build products like Phronesis and Pluclair.
                   </p>
                 </div>
               </FadeContent>
@@ -326,7 +325,7 @@ export default function Home() {
                 <Magnetic>
                   <a
                     href="mailto:collignoncharles@gmail.com"
-                    className="mix-blend-differencetext-lg sm:text-xl md:text-2xl lg:text-3xl font-medium text-zinc-400 transition-colors hover:text-zinc-600 dark:text-zinc-200 dark:hover:text-zinc-400 break-all"
+                    className="mix-blend-difference text-lg sm:text-xl md:text-2xl lg:text-3xl font-medium text-zinc-400 transition-colors hover:text-zinc-600 dark:text-zinc-200 dark:hover:text-zinc-400 break-all"
                   >
                     collignoncharles@gmail.com
                   </a>
