@@ -1,5 +1,5 @@
 import { setRequestLocale } from "next-intl/server";
-import { Scene3D } from "@/components/scene-3d";
+import { SceneLoader } from "@/components/scene-loader";
 import { Header } from "@/components/header";
 import { Hero } from "@/components/sections/hero";
 import { About } from "@/components/sections/about";
@@ -17,7 +17,7 @@ export default async function Home({
 
   return (
     <>
-      <Scene3D />
+      <SceneLoader />
       <Header />
       <main id="main" className="relative w-full">
         <Hero />

@@ -15,6 +15,7 @@ gsap.registerPlugin(ScrollTrigger, useGSAP);
 
 export function Work() {
   const t = useTranslations("work");
+  const sectionRef = useRef<HTMLElement>(null);
   const stackRef = useRef<HTMLDivElement>(null);
   const minor = projects.filter((p) => !p.featured);
 
@@ -28,7 +29,7 @@ export function Work() {
       ScrollTrigger.create({
         trigger: stack,
         start: "top top",
-        endTrigger: "#work",
+        endTrigger: sectionRef.current,
         end: "bottom bottom",
         onToggle: (self) => setSceneCovered(self.isActive),
       });
@@ -71,7 +72,7 @@ export function Work() {
   );
 
   return (
-    <section id="work" data-camera="work" className="relative pt-section">
+    <section ref={sectionRef} id="work" data-camera="work" className="relative pt-section">
       <div className="page-x mb-12 flex flex-col gap-2 md:mb-20">
         <p className="eyebrow text-zinc-500 dark:text-zinc-400">{t("eyebrow")}</p>
         <SplitReveal

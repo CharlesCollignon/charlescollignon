@@ -1,12 +1,14 @@
 "use client";
 
 import { useRef, useEffect, useState } from "react";
-import { Canvas, useFrame } from "@react-three/fiber";
-import { Environment } from "@react-three/drei";
+import dynamic from "next/dynamic";
 import Spline from "@splinetool/react-spline";
 import type { Application, SPEObject } from "@splinetool/runtime";
-import type * as THREE from "three";
 import { onSceneCovered } from "@/lib/scene-bus";
+import { useMediaQuery } from "@/hooks/use-media-query";
+
+// The floating torus pulls in its own three.js: only load it where it's worth it.
+const SceneTorus = dynamic(() => import("./scene-torus"), { ssr: false });
 
 const SCENE_URL =
   "https://prod.spline.design/wBbmkii5XDthay9E/scene.splinecode";
@@ -43,13 +45,18 @@ function findFirst(spline: Application, names: string[]) {
   return undefined;
 }
 
-export function Scene3D() {
+export default function Scene3D() {
+  const [loaded, setLoaded] = useState(false);
+  const richScene = useMediaQuery(
+    "(min-width: 768px) and (pointer: fine) and (prefers-reduced-motion: no-preference)",
+  );
   const targetRef = useRef<{ obj: SPEObject; isCamera: boolean } | null>(null);
   const applyRef = useRef<() => void>(() => {});
   const splineRef = useRef<Application | null>(null);
 
   function onLoad(spline: Application) {
     splineRef.current = spline;
+    setLoaded(true);
     // Let Spline receive pointer events even though it sits behind the page.
     spline.setGlobalEvents(true);
 
@@ -150,89 +157,13 @@ export function Scene3D() {
       aria-hidden
       className="pointer-events-none fixed inset-0 -z-10 h-dvh w-screen bg-white dark:bg-black"
     >
-      <Spline scene={SCENE_URL} onLoad={onLoad} className="size-full" />
-      <ForegroundScene3D paused={covered} />
-    </div>
-  );
-}
-
-function FloatingObject({
-  onDepthChange,
-}: {
-  onDepthChange: (front: boolean) => void;
-}) {
-  const meshRef = useRef<THREE.Mesh>(null);
-  const isFrontRef = useRef(true);
-
-  useFrame((state) => {
-    const mesh = meshRef.current;
-    if (!mesh) return;
-
-    const t = state.clock.getElapsedTime();
-    const radiusX = 3.5 + Math.sin(t * 0.3) * 1.5;
-    const radiusZ = 2 + Math.cos(t * 0.2) * 1;
-
-    mesh.position.x = Math.sin(t * 0.4) * radiusX;
-    const z = Math.cos(t * 0.4) * radiusZ;
-    mesh.position.z = z;
-
-    const isFront = z > 0;
-    if (isFront !== isFrontRef.current) {
-      isFrontRef.current = isFront;
-      onDepthChange(isFront);
-    }
-
-    // Starts near the top and drifts down as the page scrolls.
-    mesh.position.y = 3 - window.scrollY * 0.005 + Math.sin(t * 0.5) * 0.5;
-    mesh.rotation.x = t * 0.3;
-    mesh.rotation.y = t * 0.2;
-  });
-
-  return (
-    <mesh ref={meshRef} position={[0, 4, 0]}>
-      <torusKnotGeometry args={[0.6, 0.2, 256, 64]} />
-      <meshPhysicalMaterial
-        color="#3b82f6"
-        emissive="#1d4ed8"
-        emissiveIntensity={0.2}
-        roughness={0.1}
-        metalness={0.7}
-        clearcoat={1}
-        clearcoatRoughness={0.1}
-        iridescence={1}
-        iridescenceIOR={1.6}
-        iridescenceThicknessMinimum={200}
-        iridescenceThicknessMaximum={1000}
+      <Spline
+        scene={SCENE_URL}
+        onLoad={onLoad}
+        className="size-full transition-opacity duration-1000"
+        style={{ opacity: loaded ? 1 : 0 }}
       />
-    </mesh>
-  );
-}
-
-function ForegroundScene3D({ paused }: { paused: boolean }) {
-  const layerRef = useRef<HTMLDivElement>(null);
-
-  // Swap the layer's z-index directly so depth changes don't re-render the canvas.
-  const onDepthChange = (front: boolean) => {
-    if (layerRef.current) layerRef.current.style.zIndex = front ? "-5" : "-20";
-  };
-
-  return (
-    <div
-      ref={layerRef}
-      className="pointer-events-none fixed inset-0 transition-opacity duration-500"
-      style={{ zIndex: -5, opacity: paused ? 0 : 1 }}
-    >
-      <Canvas
-        camera={{ position: [0, 0, 8], fov: 50 }}
-        frameloop={paused ? "never" : "always"}
-        dpr={[1, 2]}
-        gl={{ antialias: true, alpha: true }}
-      >
-        <ambientLight intensity={1} />
-        <directionalLight position={[5, 2, 5]} intensity={1} />
-        <Environment preset="city" />
-        <FloatingObject onDepthChange={onDepthChange} />
-      </Canvas>
+      {richScene && loaded && <SceneTorus paused={covered} />}
     </div>
   );
 }
