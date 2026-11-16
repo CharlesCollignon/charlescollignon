@@ -2,61 +2,99 @@
 
 import { useTranslations } from "next-intl";
 import FadeContent from "@/components/FadeContent";
-import { StaggerContainer, StaggerItem } from "@/components/animations";
-import { SplitReveal } from "@/components/motion/split-reveal";
+import { Marquee } from "@/components/motion/marquee";
+import { ScrollWords } from "@/components/motion/scroll-words";
 
-const skills = [
+const SKILLS = [
   "Product design",
   "Design systems",
   "Team leadership",
-  "Next.js",
-  "React",
-  "TypeScript",
-  "Tailwind CSS",
-  "Motion & GSAP",
-  "Three.js",
-  "Data visualisation",
-  "MapLibre",
-  "ECharts",
+  "Design ops",
+  "Accessibility",
+  "Motion design",
+  "Prototyping",
+  "Figma",
 ];
+const STACK = [
+  "TypeScript",
+  "React",
+  "Next.js",
+  "TanStack",
+  "Tailwind CSS",
+  "Motion",
+  "GSAP",
+  "Three.js",
+  "ECharts",
+  "MapLibre",
+  "Postgres",
+  "Supabase",
+];
+
+const PILLARS = ["lead", "design", "build"] as const;
+
+function Chip({ children }: { children: string }) {
+  return (
+    <span className="whitespace-nowrap rounded-full border border-zinc-300 px-5 py-2.5 text-sm text-zinc-800 dark:border-zinc-800 dark:text-zinc-300">
+      {children}
+    </span>
+  );
+}
 
 export function About() {
   const t = useTranslations("about");
 
   return (
-    <section id="about" className="flex min-h-dvh w-full items-center">
-      <div className="page-x flex flex-col items-center gap-12 text-center md:gap-16">
-        <div className="flex flex-col items-center">
-          <p className="eyebrow text-zinc-900 dark:text-zinc-400">
-            {t("eyebrow")}
-          </p>
-          <SplitReveal
-            as="h2"
-            className="mt-4 max-w-[14ch] text-h2 font-bold text-zinc-900 dark:text-zinc-100"
-          >
-            {t("title")}
-          </SplitReveal>
-        </div>
+    <section
+      id="about"
+      data-camera="about"
+      className="relative flex min-h-dvh w-full flex-col justify-center gap-section py-section"
+    >
+      <div className="page-x">
+        <p className="eyebrow mb-8 text-zinc-500 md:mb-12 dark:text-zinc-400">
+          {t("eyebrow")}
+        </p>
+        <ScrollWords
+          text={t("manifesto")}
+          className="max-w-[22ch] text-[clamp(2rem,1rem+4.2vw,5.5rem)] font-medium leading-[1.04] tracking-[-0.035em] text-zinc-900 dark:text-zinc-50"
+        />
+      </div>
 
-        <StaggerContainer
-          className="flex max-w-3xl flex-wrap justify-center gap-2 md:gap-3"
-          staggerDelay={0.05}
-        >
-          {skills.map((skill) => (
-            <StaggerItem key={skill}>
-              <p className="inline-flex rounded-full border border-zinc-300 px-4 py-2 text-xs text-zinc-900 sm:text-sm dark:border-zinc-800 dark:text-zinc-300">
-                {skill}
-              </p>
-            </StaggerItem>
+      <div className="page-x">
+        <h2 className="eyebrow mb-8 text-zinc-500 md:mb-12 dark:text-zinc-400">
+          {t("pillarsTitle")}
+        </h2>
+        <ol className="grid gap-10 md:grid-cols-3 md:gap-8 lg:gap-14">
+          {PILLARS.map((key, i) => (
+            <li key={key}>
+              <FadeContent
+                delay={i * 0.12}
+                duration={0.9}
+                className="flex flex-col gap-4 border-t border-zinc-300 pt-6 dark:border-zinc-800"
+              >
+                <span className="font-mono text-xs text-zinc-500">0{i + 1}</span>
+                <h3 className="text-h3 font-semibold text-zinc-900 dark:text-zinc-50">
+                  {t(`pillars.${key}.title`)}
+                </h3>
+                <p className="text-body text-zinc-700 dark:text-zinc-400">
+                  {t(`pillars.${key}.body`)}
+                </p>
+              </FadeContent>
+            </li>
           ))}
-        </StaggerContainer>
+        </ol>
+      </div>
 
-        <FadeContent delay={0.2}>
-          <div className="flex max-w-2xl flex-col gap-6 text-body text-zinc-900 dark:text-zinc-400">
-            <p>{t("p1")}</p>
-            <p>{t("p2")}</p>
-          </div>
-        </FadeContent>
+      <div className="flex flex-col gap-3">
+        <Marquee seconds={45}>
+          {SKILLS.map((s) => (
+            <Chip key={s}>{s}</Chip>
+          ))}
+        </Marquee>
+        <Marquee seconds={55} reverse>
+          {STACK.map((s) => (
+            <Chip key={s}>{s}</Chip>
+          ))}
+        </Marquee>
       </div>
     </section>
   );

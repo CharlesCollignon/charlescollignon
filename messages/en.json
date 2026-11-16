@@ -10,7 +10,10 @@
     "skip": "Skip to content",
     "language": "Language",
     "switchTo": "Passer en français",
-    "theme": "Toggle theme"
+    "theme": "Toggle theme",
+    "menu": "Menu",
+    "close": "Close",
+    "home": "Charles Collignon, home"
   },
   "hero": {
     "role": "Engineering Manager, Design and Product",
@@ -20,20 +23,40 @@
       "Calm software for complex data."
     ],
     "ctaWork": "View work",
-    "ctaContact": "Get in touch"
+    "ctaContact": "Get in touch",
+    "scroll": "Scroll"
   },
   "about": {
     "eyebrow": "About",
     "title": "Building digital experiences",
     "p1": "I'm an engineering manager working across design and product. I take products from first sketch to production: interface, design system and the code that ships them.",
-    "p2": "At QuantCube Technology I lead design and frontend engineering for the Macro Intelligence Platform. On my own time I build products like Phronesis and Pluclair."
+    "p2": "At QuantCube Technology I lead design and frontend engineering for the Macro Intelligence Platform. On my own time I build products like Phronesis and Pluclair.",
+    "manifesto": "I lead design and engineering for products that make complex data feel calm, from the first sketch to the code that ships it.",
+    "pillarsTitle": "How I work",
+    "pillars": {
+      "lead": {
+        "title": "Lead",
+        "body": "I run design and frontend as one team: shared tokens, shared reviews, one definition of done. Fewer handoffs, faster decisions."
+      },
+      "design": {
+        "title": "Design",
+        "body": "Interfaces and design systems built for dense data: clear hierarchy, honest numbers, motion that explains rather than decorates."
+      },
+      "build": {
+        "title": "Build",
+        "body": "Production TypeScript with React, Next.js and TanStack, data visualisation with ECharts and MapLibre, and WebGL when it earns its place."
+      }
+    }
   },
   "work": {
     "eyebrow": "Selected work",
     "title": "Projects",
     "visit": "Visit",
     "caseStudy": "Case study",
-    "private": "Private platform"
+    "private": "Private platform",
+    "also": "Also built",
+    "of": "of",
+    "viewLive": "Open live site"
   },
   "projects": {
     "phronesis": {
@@ -57,11 +80,15 @@
     "eyebrow": "Contact",
     "title": "Let's work together",
     "copy": "Copy email",
-    "copied": "Copied"
+    "copied": "Copied",
+    "lead": "Have a product that needs design and engineering to move as one? Let's talk.",
+    "localTime": "Paris",
+    "elsewhere": "Elsewhere"
   },
   "footer": {
     "rights": "All rights reserved.",
-    "built": "Built with Next.js, Spline, GSAP and Motion"
+    "built": "Built with Next.js, Spline, GSAP and Motion",
+    "top": "Back to top"
   },
   "caseStudy": {
     "role": "Role",

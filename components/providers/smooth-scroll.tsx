@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 import Lenis from "lenis";
+import { MotionConfig } from "motion/react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import "lenis/dist/lenis.css";
@@ -49,6 +50,9 @@ export function SmoothScroll({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <LenisContext.Provider value={lenis}>{children}</LenisContext.Provider>
+    <LenisContext.Provider value={lenis}>
+      {/* Motion animations honour the OS "reduce motion" setting site-wide. */}
+      <MotionConfig reducedMotion="user">{children}</MotionConfig>
+    </LenisContext.Provider>
   );
 }

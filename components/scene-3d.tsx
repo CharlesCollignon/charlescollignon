@@ -1,11 +1,12 @@
 "use client";
 
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { Environment } from "@react-three/drei";
 import Spline from "@splinetool/react-spline";
 import type { Application, SPEObject } from "@splinetool/runtime";
 import type * as THREE from "three";
+import { onSceneCovered } from "@/lib/scene-bus";
 
 const SCENE_URL =
   "https://prod.spline.design/wBbmkii5XDthay9E/scene.splinecode";
@@ -19,13 +20,17 @@ const CAMERA_NAMES = [
 ];
 const GROUP_NAMES = ["Scene", "Group", "Robot", "Character"];
 
-/** Camera keyframes, one per viewport height of scroll: hero → about → work → contact. */
-const CAMERA_STATES = [
-  { x: 0, y: 160, z: 900 },
-  { x: 0, y: -340, z: 12000 },
-  { x: -50, y: 280, z: 200 },
-  { x: 0, y: 160, z: 900 },
-];
+/**
+ * Camera keyframes, keyed by the `data-camera` attribute of page sections.
+ * The camera eases from one pose to the next as each section reaches the top
+ * of the viewport, whatever the sections' heights.
+ */
+const CAMERA_POSES: Record<string, { x: number; y: number; z: number }> = {
+  hero: { x: 0, y: 160, z: 900 },
+  about: { x: 0, y: -340, z: 12000 },
+  work: { x: -50, y: 280, z: 200 },
+  contact: { x: 0, y: 160, z: 900 },
+};
 
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 const smoothstep = (t: number) => t * t * (3 - 2 * t);
@@ -41,8 +46,10 @@ function findFirst(spline: Application, names: string[]) {
 export function Scene3D() {
   const targetRef = useRef<{ obj: SPEObject; isCamera: boolean } | null>(null);
   const applyRef = useRef<() => void>(() => {});
+  const splineRef = useRef<Application | null>(null);
 
   function onLoad(spline: Application) {
+    splineRef.current = spline;
     // Let Spline receive pointer events even though it sits behind the page.
     spline.setGlobalEvents(true);
 
@@ -59,33 +66,46 @@ export function Scene3D() {
 
   useEffect(() => {
     let frame = 0;
+    let stops: { top: number; pose: (typeof CAMERA_POSES)[string] }[] = [];
+
+    const measure = () => {
+      stops = Array.from(
+        document.querySelectorAll<HTMLElement>("[data-camera]"),
+      )
+        .map((el) => ({
+          top: el.getBoundingClientRect().top + window.scrollY,
+          pose: CAMERA_POSES[el.dataset.camera ?? ""],
+        }))
+        .filter((s) => s.pose)
+        .sort((a, b) => a.top - b.top);
+    };
 
     const apply = () => {
       frame = 0;
       const target = targetRef.current;
-      if (!target) return;
+      if (!target || stops.length === 0) return;
 
-      const progress = Math.max(0, window.scrollY / window.innerHeight);
-      const segment = Math.min(
-        Math.floor(progress),
-        CAMERA_STATES.length - 2,
-      );
-      const t = smoothstep(Math.min(progress - segment, 1));
-      const from = CAMERA_STATES[segment];
-      const to = CAMERA_STATES[segment + 1];
-      const x = lerp(from.x, to.x, t);
-      const y = lerp(from.y, to.y, t);
-      const z = lerp(from.z, to.z, t);
+      const y = window.scrollY;
+      let i = 0;
+      while (i < stops.length - 2 && y >= stops[i + 1].top) i++;
+      const from = stops[i];
+      const to = stops[Math.min(i + 1, stops.length - 1)];
+      const span = Math.max(to.top - from.top, 1);
+      const t = smoothstep(Math.min(Math.max((y - from.top) / span, 0), 1));
+
+      const px = lerp(from.pose.x, to.pose.x, t);
+      const py = lerp(from.pose.y, to.pose.y, t);
+      const pz = lerp(from.pose.z, to.pose.z, t);
 
       if (target.isCamera) {
-        target.obj.position.x = x;
-        target.obj.position.y = y;
-        target.obj.position.z = z;
+        target.obj.position.x = px;
+        target.obj.position.y = py;
+        target.obj.position.z = pz;
       } else {
         // Moving the scene instead of the camera: invert, assuming a default camera z of 1200.
-        target.obj.position.x = -x;
-        target.obj.position.y = -y;
-        target.obj.position.z = 1200 - z;
+        target.obj.position.x = -px;
+        target.obj.position.y = -py;
+        target.obj.position.z = 1200 - pz;
       }
     };
     applyRef.current = apply;
@@ -93,17 +113,37 @@ export function Scene3D() {
     const onScroll = () => {
       if (!frame) frame = requestAnimationFrame(apply);
     };
+    const onResize = () => {
+      measure();
+      onScroll();
+    };
+
+    // Section heights change with fonts, images and breakpoints.
+    const ro = new ResizeObserver(onResize);
+    ro.observe(document.body);
 
     window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", onScroll, { passive: true });
+    measure();
     apply();
 
     return () => {
+      ro.disconnect();
       window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("resize", onScroll);
       cancelAnimationFrame(frame);
     };
   }, []);
+
+  // Stop rendering while opaque sections fully cover the scene.
+  const [covered, setCovered] = useState(false);
+  useEffect(
+    () =>
+      onSceneCovered((value) => {
+        setCovered(value);
+        if (value) splineRef.current?.stop();
+        else splineRef.current?.play();
+      }),
+    [],
+  );
 
   return (
     <div
@@ -111,7 +151,7 @@ export function Scene3D() {
       className="pointer-events-none fixed inset-0 -z-10 h-dvh w-screen bg-white dark:bg-black"
     >
       <Spline scene={SCENE_URL} onLoad={onLoad} className="size-full" />
-      <ForegroundScene3D />
+      <ForegroundScene3D paused={covered} />
     </div>
   );
 }
@@ -168,7 +208,7 @@ function FloatingObject({
   );
 }
 
-function ForegroundScene3D() {
+function ForegroundScene3D({ paused }: { paused: boolean }) {
   const layerRef = useRef<HTMLDivElement>(null);
 
   // Swap the layer's z-index directly so depth changes don't re-render the canvas.
@@ -179,11 +219,12 @@ function ForegroundScene3D() {
   return (
     <div
       ref={layerRef}
-      className="pointer-events-none fixed inset-0"
-      style={{ zIndex: -5 }}
+      className="pointer-events-none fixed inset-0 transition-opacity duration-500"
+      style={{ zIndex: -5, opacity: paused ? 0 : 1 }}
     >
       <Canvas
         camera={{ position: [0, 0, 8], fov: 50 }}
+        frameloop={paused ? "never" : "always"}
         dpr={[1, 2]}
         gl={{ antialias: true, alpha: true }}
       >

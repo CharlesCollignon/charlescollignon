@@ -1,104 +1,109 @@
 "use client";
 
+import { useRef } from "react";
 import { useTranslations } from "next-intl";
-import FadeContent from "@/components/FadeContent";
+import { gsap } from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { useGSAP } from "@gsap/react";
 import { SplitReveal } from "@/components/motion/split-reveal";
-import { projects, type Project } from "@/content/projects";
+import { ProjectPanel } from "@/components/work/project-panel";
+import { AlsoList } from "@/components/work/also-list";
+import { featuredProjects, projects } from "@/content/projects";
+import { setSceneCovered } from "@/lib/scene-bus";
+
+gsap.registerPlugin(ScrollTrigger, useGSAP);
 
 export function Work() {
   const t = useTranslations("work");
-  const featured = projects.filter((p) => p.featured);
+  const stackRef = useRef<HTMLDivElement>(null);
   const minor = projects.filter((p) => !p.featured);
 
+  useGSAP(
+    () => {
+      const stack = stackRef.current;
+      if (!stack) return;
+
+      // From the first panel to the end of the section everything is opaque:
+      // let the 3D background rest meanwhile.
+      ScrollTrigger.create({
+        trigger: stack,
+        start: "top top",
+        endTrigger: "#work",
+        end: "bottom bottom",
+        onToggle: (self) => setSceneCovered(self.isActive),
+      });
+
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+      const slots = gsap.utils.toArray<HTMLElement>("[data-slot]", stack);
+      slots.forEach((slot, i) => {
+        const panel = slot.querySelector<HTMLElement>("[data-panel]");
+        const next = slots[i + 1];
+        if (!panel) return;
+
+        // The product rises a little slower than the copy as a panel arrives.
+        const visual = panel.querySelector("[data-depth]");
+        if (visual) {
+          gsap.fromTo(
+            visual,
+            { yPercent: 30 },
+            {
+              yPercent: 0,
+              ease: "none",
+              scrollTrigger: { trigger: slot, start: "top bottom", end: "top top", scrub: true },
+            },
+          );
+        }
+
+        // As the next panel slides over, this one sinks back and dims.
+        if (next) {
+          gsap.to(panel, {
+            scale: 0.92,
+            filter: "brightness(0.55)",
+            borderRadius: "2.5rem",
+            ease: "none",
+            scrollTrigger: { trigger: next, start: "top bottom", end: "top top", scrub: true },
+          });
+        }
+      });
+    },
+    { scope: stackRef },
+  );
+
   return (
-    <section
-      id="work"
-      className="flex min-h-dvh w-full items-center py-section"
-    >
-      <div className="page-x flex flex-col gap-12 md:gap-16">
-        <div className="flex flex-col items-center text-center">
-          <p className="eyebrow text-zinc-900 dark:text-zinc-400">
-            {t("eyebrow")}
-          </p>
-          <SplitReveal
-            as="h2"
-            className="mt-2 text-h2 font-bold text-zinc-900 dark:text-zinc-100"
+    <section id="work" data-camera="work" className="relative pt-section">
+      <div className="page-x mb-12 flex flex-col gap-2 md:mb-20">
+        <p className="eyebrow text-zinc-500 dark:text-zinc-400">{t("eyebrow")}</p>
+        <SplitReveal
+          as="h2"
+          by="words"
+          className="text-h2 font-semibold text-zinc-900 dark:text-zinc-50"
+        >
+          {t("title")}
+        </SplitReveal>
+      </div>
+
+      <div ref={stackRef} className="relative">
+        {featuredProjects.map((project, i) => (
+          <div
+            key={project.slug}
+            data-slot
+            className="sticky top-0 h-dvh"
           >
-            {t("title")}
-          </SplitReveal>
-        </div>
-
-        <div className="grid gap-6 md:grid-cols-3 md:gap-8">
-          {featured.map((project, i) => (
-            <FadeContent key={project.slug} delay={i * 0.1}>
-              <FeaturedCard project={project} />
-            </FadeContent>
-          ))}
-        </div>
-
-        {minor.map((project) => (
-          <FadeContent key={project.slug}>
-            <MinorRow project={project} />
-          </FadeContent>
+            <ProjectPanel
+              project={project}
+              index={i}
+              total={featuredProjects.length}
+            />
+          </div>
         ))}
       </div>
+
+      <div className="relative bg-white py-section dark:bg-black">
+        <div className="page-x">
+          <AlsoList projects={minor} />
+        </div>
+      </div>
     </section>
-  );
-}
-
-function FeaturedCard({ project }: { project: Project }) {
-  const t = useTranslations();
-  const href = project.url;
-  const Tag = href ? "a" : "div";
-
-  return (
-    <Tag
-      {...(href
-        ? { href, target: "_blank", rel: "noopener noreferrer" }
-        : {})}
-      data-cursor={href ? t("work.visit") : undefined}
-      className="group relative flex aspect-4/5 flex-col justify-between overflow-hidden rounded-2xl p-6 transition-transform duration-500 ease-out-expo hover:-translate-y-1 md:p-8"
-      style={{ backgroundColor: project.accent, color: project.onAccent }}
-    >
-      <div className="flex items-center justify-between text-xs font-medium uppercase tracking-[0.2em] opacity-70">
-        <span>{project.year}</span>
-        {!href && <span>{t("work.private")}</span>}
-      </div>
-      <div>
-        <h3 className="text-h3 font-semibold">
-          {t(`projects.${project.slug}.title`)}
-        </h3>
-        <p className="mt-3 text-sm leading-relaxed opacity-80">
-          {t(`projects.${project.slug}.tagline`)}
-        </p>
-        <p className="mt-6 text-xs opacity-60">{project.stack.join(" · ")}</p>
-      </div>
-    </Tag>
-  );
-}
-
-function MinorRow({ project }: { project: Project }) {
-  const t = useTranslations();
-
-  return (
-    <a
-      href={project.url}
-      target="_blank"
-      rel="noopener noreferrer"
-      data-cursor={t("work.visit")}
-      className="group flex flex-col gap-4 border-t border-zinc-300 pt-6 md:flex-row md:items-center md:justify-between dark:border-zinc-800"
-    >
-      <div>
-        <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-          {t(`projects.${project.slug}.title`)}
-        </h3>
-        <p className="mt-1 text-sm text-zinc-700 dark:text-zinc-400">
-          {t(`projects.${project.slug}.tagline`)}
-        </p>
-      </div>
-      <p className="text-xs text-zinc-500">
-        {project.year} · {project.stack.join(" · ")}
-      </p>
-    </a>
   );
 }

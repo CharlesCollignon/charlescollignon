@@ -196,16 +196,6 @@ html {
   background: #52525b;
 }
 
-/* Scroll animation for project hover images */
-@keyframes scroll-background {
-  0% {
-    background-position: top center;
-  }
-  100% {
-    background-position: bottom center;
-  }
-}
-
 :root {
   --radius: 0.625rem;
   --background: oklch(1 0 0);
@@ -248,5 +238,37 @@ html {
 
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+/* Marquee: each track slides by its own width; the duplicate fills the gap. */
+@keyframes marquee {
+  to {
+    transform: translateX(-100%);
+  }
+}
+
+.marquee-track {
+  animation: marquee linear infinite;
+}
+
+/* Hero scroll cue: a short bar sliding down a hairline. */
+@keyframes scroll-cue {
+  0% {
+    transform: translateY(-100%);
+  }
+  100% {
+    transform: translateY(200%);
+  }
+}
+
+.scroll-cue {
+  animation: scroll-cue 1.8s var(--ease-in-out-quart) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track,
+  .scroll-cue {
+    animation: none;
   }
 }

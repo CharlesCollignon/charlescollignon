@@ -10,7 +10,10 @@
     "skip": "Aller au contenu",
     "language": "Langue",
     "switchTo": "Switch to English",
-    "theme": "Changer de thème"
+    "theme": "Changer de thème",
+    "menu": "Menu",
+    "close": "Fermer",
+    "home": "Charles Collignon, accueil"
   },
   "hero": {
     "role": "Engineering Manager, Design et Produit",
@@ -20,20 +23,40 @@
       "Des logiciels sereins pour des données complexes."
     ],
     "ctaWork": "Voir les projets",
-    "ctaContact": "Me contacter"
+    "ctaContact": "Me contacter",
+    "scroll": "Défiler"
   },
   "about": {
     "eyebrow": "À propos",
     "title": "Construire des expériences numériques",
     "p1": "Je suis engineering manager entre design et produit. J'emmène les produits du premier croquis jusqu'à la production : interface, design system et le code qui les livre.",
-    "p2": "Chez QuantCube Technology, je dirige le design et l'ingénierie frontend de la Macro Intelligence Platform. En parallèle, je construis des produits comme Phronesis et Pluclair."
+    "p2": "Chez QuantCube Technology, je dirige le design et l'ingénierie frontend de la Macro Intelligence Platform. En parallèle, je construis des produits comme Phronesis et Pluclair.",
+    "manifesto": "Je dirige le design et l'ingénierie de produits qui rendent les données complexes sereines, du premier croquis jusqu'au code qui les livre.",
+    "pillarsTitle": "Ma façon de travailler",
+    "pillars": {
+      "lead": {
+        "title": "Diriger",
+        "body": "Je fais du design et du frontend une seule équipe : des tokens partagés, des revues partagées, une seule définition du « fini ». Moins de passations, des décisions plus rapides."
+      },
+      "design": {
+        "title": "Concevoir",
+        "body": "Des interfaces et des design systems pensés pour les données denses : une hiérarchie claire, des chiffres honnêtes, des animations qui expliquent plutôt qu'elles ne décorent."
+      },
+      "build": {
+        "title": "Construire",
+        "body": "Du TypeScript en production avec React, Next.js et TanStack, de la visualisation de données avec ECharts et MapLibre, et du WebGL quand il le mérite."
+      }
+    }
   },
   "work": {
     "eyebrow": "Projets choisis",
     "title": "Projets",
     "visit": "Visiter",
     "caseStudy": "Étude de cas",
-    "private": "Plateforme privée"
+    "private": "Plateforme privée",
+    "also": "Également",
+    "of": "sur",
+    "viewLive": "Ouvrir le site"
   },
   "projects": {
     "phronesis": {
@@ -57,11 +80,15 @@
     "eyebrow": "Contact",
     "title": "Travaillons ensemble",
     "copy": "Copier l'e-mail",
-    "copied": "Copié"
+    "copied": "Copié",
+    "lead": "Un produit où le design et l'ingénierie doivent avancer ensemble ? Parlons-en.",
+    "localTime": "Paris",
+    "elsewhere": "Ailleurs"
   },
   "footer": {
     "rights": "Tous droits réservés.",
-    "built": "Construit avec Next.js, Spline, GSAP et Motion"
+    "built": "Construit avec Next.js, Spline, GSAP et Motion",
+    "top": "Retour en haut"
   },
   "caseStudy": {
     "role": "Rôle",

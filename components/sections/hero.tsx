@@ -1,18 +1,48 @@
 "use client";
 
+import { useRef } from "react";
 import { useTranslations } from "next-intl";
+import { gsap } from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { useGSAP } from "@gsap/react";
 import FadeContent from "@/components/FadeContent";
 import TextType from "@/components/TextType";
 import { Magnetic } from "@/components/motion/magnetic";
 import { SplitReveal } from "@/components/motion/split-reveal";
 
+gsap.registerPlugin(ScrollTrigger, useGSAP);
+
 export function Hero() {
   const t = useTranslations("hero");
   const lines = t.raw("lines") as string[];
+  const ref = useRef<HTMLElement>(null);
+
+  // As the hero scrolls away its content drifts up and fades, ahead of the page.
+  useGSAP(
+    () => {
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+      gsap.to("[data-hero-content]", {
+        yPercent: -18,
+        opacity: 0,
+        ease: "none",
+        scrollTrigger: {
+          trigger: ref.current,
+          start: "top top",
+          end: "bottom top",
+          scrub: true,
+        },
+      });
+    },
+    { scope: ref },
+  );
 
   return (
-    <section className="flex min-h-dvh flex-col items-center justify-center">
-      <div className="page-x flex flex-col items-center text-center">
+    <section
+      ref={ref}
+      data-camera="hero"
+      className="relative flex min-h-dvh flex-col items-center justify-center"
+    >
+      <div data-hero-content className="page-x flex flex-col items-center text-center">
         <FadeContent blur delay={0.2} duration={1.2}>
           <p className="eyebrow mb-4 text-zinc-300 mix-blend-difference dark:text-zinc-400">
             {t("role")}
@@ -66,6 +96,22 @@ export function Hero() {
           </div>
         </FadeContent>
       </div>
+
+      <FadeContent
+        delay={2}
+        duration={1}
+        className="absolute bottom-6 left-1/2 -translate-x-1/2 md:bottom-8"
+      >
+        <a
+          href="#about"
+          className="flex flex-col items-center gap-3 text-[11px] font-medium uppercase tracking-[0.25em] text-zinc-400 mix-blend-difference"
+        >
+          {t("scroll")}
+          <span className="relative block h-10 w-px overflow-hidden bg-zinc-400/30">
+            <span className="scroll-cue absolute inset-x-0 top-0 h-1/2 bg-zinc-300" />
+          </span>
+        </a>
+      </FadeContent>
     </section>
   );
 }
