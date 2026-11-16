@@ -6,6 +6,7 @@ import { MotionConfig } from "motion/react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import "lenis/dist/lenis.css";
+import { usePathname } from "next/navigation";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -48,6 +49,25 @@ export function SmoothScroll({ children }: { children: React.ReactNode }) {
       setLenis(null);
     };
   }, []);
+
+  // New page: re-measure triggers, then jump to the anchor in the URL if
+  // there is one (e.g. "/#work" from a case study), otherwise to the top.
+  const pathname = usePathname();
+  useEffect(() => {
+    let raf = requestAnimationFrame(() => {
+      ScrollTrigger.refresh();
+      raf = requestAnimationFrame(() => {
+        const hash = decodeURIComponent(window.location.hash.slice(1));
+        const target = hash ? document.getElementById(hash) : null;
+        const y = target
+          ? target.getBoundingClientRect().top + window.scrollY
+          : 0;
+        if (lenis) lenis.scrollTo(y, { immediate: true, force: true });
+        else window.scrollTo(0, y);
+      });
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [pathname, lenis]);
 
   return (
     <LenisContext.Provider value={lenis}>

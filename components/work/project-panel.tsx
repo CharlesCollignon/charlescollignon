@@ -3,6 +3,7 @@
 import { useFormatter, useTranslations } from "next-intl";
 import type { Project } from "@/content/projects";
 import { Magnetic } from "@/components/motion/magnetic";
+import { Link } from "@/i18n/navigation";
 import { Tilt } from "@/components/motion/tilt";
 import { BrowserFrame, PhoneFrame } from "./frames";
 import { MipConstellation } from "./mip-constellation";
@@ -83,19 +84,26 @@ export function ProjectPanel({
           </dl>
 
           <div className="flex flex-wrap items-center gap-3 pt-1">
+            <Magnetic strength={0.25}>
+              <Link
+                href={`/work/${project.slug}`}
+                data-cursor={t("caseStudy.caseStudy")}
+                className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-semibold"
+                style={{ backgroundColor: project.accent, color: project.onAccent }}
+              >
+                {t("caseStudy.caseStudy")}
+                <span aria-hidden>→</span>
+              </Link>
+            </Magnetic>
             {project.url && (
-              <Magnetic strength={0.25}>
-                <a
-                  href={project.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-semibold transition-transform"
-                  style={{ backgroundColor: project.accent, color: project.onAccent }}
-                >
-                  {t("work.viewLive")}
-                  <span aria-hidden>↗</span>
-                </a>
-              </Magnetic>
+              <a
+                href={project.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 rounded-full border border-current/25 px-5 py-3 text-sm font-medium transition-colors hover:border-current/60"
+              >
+                {t("work.viewLive")} <span aria-hidden>↗</span>
+              </a>
             )}
             <ul className="flex flex-wrap gap-x-3 gap-y-1 text-xs opacity-55 max-md:hidden">
               {project.stack.slice(0, 4).map((s) => (

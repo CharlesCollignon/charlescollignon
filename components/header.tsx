@@ -13,6 +13,19 @@ import { cn } from "@/lib/utils";
 const SECTIONS = ["about", "work", "contact"] as const;
 const EASE = [0.16, 1, 0.3, 1] as const;
 
+/** On the home page sections are anchors; elsewhere they point back home. */
+function NavLink({
+  id,
+  onHome,
+  ...props
+}: { id: string; onHome: boolean } & Omit<React.ComponentProps<"a">, "href">) {
+  return onHome ? (
+    <a href={`#${id}`} {...props} />
+  ) : (
+    <Link href={`/#${id}`} {...props} />
+  );
+}
+
 export function Header() {
   const t = useTranslations("nav");
   const locale = useLocale();
@@ -21,6 +34,7 @@ export function Header() {
   const active = useActiveSection([...SECTIONS]);
   const lenis = useLenis();
   const [open, setOpen] = useState(false);
+  const onHome = pathname === "/";
 
   // Lock scrolling behind the open menu; close it with Escape.
   useEffect(() => {
@@ -48,13 +62,14 @@ export function Header() {
         className="fixed inset-x-0 top-3 z-50 flex justify-center px-3 md:top-4"
       >
         <nav aria-label="Main" className={pill}>
-          <a
-            href="#main"
+          <NavLink
+            id="main"
+            onHome={onHome}
             aria-label={t("home")}
             className="flex size-10 items-center justify-center rounded-full text-sm font-semibold tracking-tight text-zinc-900 dark:text-zinc-100"
           >
             CC
-          </a>
+          </NavLink>
 
           <ul className="hidden items-center md:flex">
             {SECTIONS.map((id) => (
@@ -66,8 +81,9 @@ export function Header() {
                     transition={{ type: "spring", stiffness: 380, damping: 32 }}
                   />
                 )}
-                <a
-                  href={`#${id}`}
+                <NavLink
+                  id={id}
+                  onHome={onHome}
                   aria-current={active === id ? "true" : undefined}
                   className={cn(
                     "relative block rounded-full px-4 py-2 text-sm font-medium transition-colors",
@@ -77,7 +93,7 @@ export function Header() {
                   )}
                 >
                   {t(id)}
-                </a>
+                </NavLink>
               </li>
             ))}
           </ul>
@@ -138,7 +154,7 @@ export function Header() {
               {SECTIONS.map((id, i) => (
                 <li key={id} className="overflow-hidden">
                   <motion.a
-                    href={`#${id}`}
+                    href={onHome ? `#${id}` : `${locale === "en" ? "" : `/${locale}`}/#${id}`}
                     onClick={() => setOpen(false)}
                     className="block text-[clamp(3rem,14vw,5rem)] font-semibold leading-[1.05] tracking-tight"
                     initial={{ y: "110%" }}

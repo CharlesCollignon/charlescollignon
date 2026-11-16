@@ -104,7 +104,8 @@
     "outcome": "Where it stands",
     "next": "Next project",
     "back": "All work",
-    "private": "Private platform"
+    "private": "Private platform",
+    "caseStudy": "Case study"
   },
   "caseStudies": {
     "phronesis": {

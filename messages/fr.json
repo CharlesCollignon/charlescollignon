@@ -104,7 +104,8 @@
     "outcome": "Aujourd'hui",
     "next": "Projet suivant",
     "back": "Tous les projets",
-    "private": "Plateforme privée"
+    "private": "Plateforme privée",
+    "caseStudy": "Étude de cas"
   },
   "caseStudies": {
     "phronesis": {
