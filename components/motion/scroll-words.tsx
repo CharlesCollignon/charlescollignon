@@ -35,6 +35,7 @@ export function ScrollWords({
 
       const split = SplitText.create(el, {
         type: "words",
+        aria: "none",
         autoSplit: true,
         onSplit(self) {
           return gsap.fromTo(

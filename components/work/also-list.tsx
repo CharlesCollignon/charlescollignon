@@ -47,7 +47,7 @@ export function AlsoList({ projects }: { projects: Project[] }) {
               <span className="col-span-2 col-start-1 row-start-2 text-sm text-zinc-600 md:col-span-1 md:col-start-2 md:row-start-1 dark:text-zinc-400">
                 {t(`projects.${p.slug}.tagline`)}
               </span>
-              <span className="col-start-2 row-start-1 font-mono text-xs text-zinc-500 md:col-start-3">
+              <span className="col-start-2 row-start-1 font-mono text-xs text-zinc-600 md:col-start-3 dark:text-zinc-400">
                 {p.year} ↗
               </span>
             </a>

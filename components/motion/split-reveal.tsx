@@ -53,6 +53,9 @@ export function SplitReveal({
         type: by === "lines" ? "lines" : `lines,${by}`,
         mask: "lines",
         linesClass: "split-line",
+        // aria-label is only allowed on elements with a role (e.g. headings);
+        // whole lines/words read fine as they are.
+        aria: by === "chars" ? "auto" : "none",
         autoSplit: true,
         onSplit(self) {
           gsap.set(el, { autoAlpha: 1 });

@@ -40,6 +40,8 @@ export type Project = {
   accent: string;
   /** Text colour that reads on `accent`. */
   onAccent: string;
+  /** Accent as small text on `surface` (AA). Defaults to `accent`. */
+  accentText?: string;
   /** Page background while the case study is in view. */
   surface: string;
   onSurface: string;
@@ -172,6 +174,7 @@ export const projects: Project[] = [
     year: "2026",
     accent: "#c8403c",
     onAccent: "#ffffff",
+    accentText: "#ef6b63",
     surface: "#0a090d",
     onSurface: "#f4f4f5",
     stack: [

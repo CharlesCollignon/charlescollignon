@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { AnimatePresence, motion } from "motion/react";
 import { ThemeToggle } from "./theme-toggle";
-import FadeContent from "@/components/FadeContent";
 import { Link, usePathname } from "@/i18n/navigation";
 import { useActiveSection } from "@/hooks/use-active-section";
 import { useLenis } from "@/components/providers/smooth-scroll";
@@ -51,15 +50,13 @@ export function Header() {
   }, [open, lenis]);
 
   const pill =
-    "flex items-center gap-1 rounded-full border border-zinc-900/10 bg-white/60 p-1.5 shadow-[0_8px_30px_rgb(0_0_0/0.06)] backdrop-blur-xl dark:border-white/10 dark:bg-zinc-950/50";
+    "flex items-center gap-1 rounded-full border border-zinc-900/10 bg-white/85 p-1.5 shadow-[0_8px_30px_rgb(0_0_0/0.06)] backdrop-blur-xl dark:border-white/10 dark:bg-zinc-950/80";
 
   return (
     <>
-      <FadeContent
-        blur
-        delay={1.3}
-        duration={1.2}
-        className="fixed inset-x-0 top-3 z-50 flex justify-center px-3 md:top-4"
+      <div
+        className="css-fade fixed inset-x-0 top-3 z-50 flex justify-center px-3 md:top-4"
+        style={{ animationDelay: "1.3s" }}
       >
         <nav aria-label="Main" className={pill}>
           <NavLink
@@ -89,7 +86,7 @@ export function Header() {
                     "relative block rounded-full px-4 py-2 text-sm font-medium transition-colors",
                     active === id
                       ? "text-zinc-900 dark:text-zinc-50"
-                      : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100",
+                      : "text-zinc-600 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-white",
                   )}
                 >
                   {t(id)}
@@ -107,7 +104,7 @@ export function Header() {
             href={pathname}
             locale={other}
             aria-label={t("switchTo")}
-            className="flex size-10 items-center justify-center rounded-full text-xs font-semibold uppercase tracking-wider text-zinc-600 transition-colors hover:bg-zinc-900/[0.07] hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-white/10 dark:hover:text-zinc-100"
+            className="flex size-10 items-center justify-center rounded-full text-xs font-semibold uppercase tracking-wider text-zinc-600 transition-colors hover:bg-zinc-900/[0.07] hover:text-zinc-900 dark:text-zinc-300 dark:hover:bg-white/10 dark:hover:text-white"
           >
             {other}
           </Link>
@@ -123,7 +120,7 @@ export function Header() {
             {t("menu")}
           </button>
         </nav>
-      </FadeContent>
+      </div>
 
       <AnimatePresence>
         {open && (

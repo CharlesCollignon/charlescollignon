@@ -1,4 +1,5 @@
-import { setRequestLocale } from "next-intl/server";
+import { getTranslations, setRequestLocale } from "next-intl/server";
+import { JsonLd, personLd } from "@/lib/json-ld";
 import { SceneLoader } from "@/components/scene-loader";
 import { Header } from "@/components/header";
 import { Hero } from "@/components/sections/hero";
@@ -14,9 +15,11 @@ export default async function Home({
 }) {
   const { locale } = await params;
   setRequestLocale(locale);
+  const t = await getTranslations({ locale });
 
   return (
     <>
+      <JsonLd data={personLd(t("hero.role"), t("meta.description"))} />
       <SceneLoader />
       <Header />
       <main id="main" className="relative w-full">

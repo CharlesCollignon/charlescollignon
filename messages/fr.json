@@ -284,5 +284,10 @@
       },
       "outcome": "La plateforme reconstruite tourne sur TanStack Start, avec des couches d'architecture vérifiées par dependency-cruiser, 611 tests Vitest, et l'anglais et le français partout."
     }
+  },
+  "notFound": {
+    "title": "Page introuvable",
+    "body": "Cette page n'existe pas, ou elle a été déplacée.",
+    "home": "Retour à l'accueil"
   }
 }

@@ -6,6 +6,8 @@ import { featuredProjects, getProject } from "@/content/projects";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/sections/footer";
 import { CaseStudy } from "@/components/case/case-study";
+import { JsonLd } from "@/lib/json-ld";
+import { SITE, SITE_URL } from "@/lib/site";
 
 type Props = { params: Promise<{ locale: string; slug: string }> };
 
@@ -15,7 +17,6 @@ export function generateStaticParams() {
   );
 }
 
-export const dynamicParams = false;
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale, slug } = await params;
@@ -42,9 +43,24 @@ export default async function CaseStudyPage({ params }: Props) {
   setRequestLocale(locale);
   const project = getProject(slug);
   if (!project?.featured) notFound();
+  const t = await getTranslations({ locale });
 
   return (
     <>
+      <JsonLd
+        data={{
+          "@context": "https://schema.org",
+          "@type": "CreativeWork",
+          name: t(`projects.${slug}.title`),
+          description: t(`caseStudies.${slug}.intro`),
+          url: `${SITE_URL}${locale === routing.defaultLocale ? "" : `/${locale}`}/work/${slug}`,
+          inLanguage: locale,
+          dateCreated: project.year,
+          creator: { "@type": "Person", name: SITE.name, url: SITE_URL },
+          ...(project.url ? { sameAs: project.url } : {}),
+          keywords: project.stack.join(", "),
+        }}
+      />
       <Header />
       <main id="main">
         <CaseStudy project={project} />

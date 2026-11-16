@@ -14,7 +14,7 @@ export function ThemeToggle({ label = "Toggle theme" }: { label?: string }) {
     <motion.button
       type="button"
       onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
-      className="relative flex size-10 items-center justify-center rounded-full text-zinc-600 transition-colors hover:bg-zinc-900/[0.07] hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-white/10 dark:hover:text-zinc-100"
+      className="relative flex size-10 items-center justify-center rounded-full text-zinc-600 transition-colors hover:bg-zinc-900/[0.07] hover:text-zinc-900 dark:text-zinc-300 dark:hover:bg-white/10 dark:hover:text-zinc-100"
       whileHover={{ scale: 1.05 }}
       whileTap={{ scale: 0.95 }}
       aria-label={label}

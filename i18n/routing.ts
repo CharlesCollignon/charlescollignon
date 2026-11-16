@@ -7,6 +7,8 @@ export const routing = defineRouting({
   localePrefix: "as-needed",
   // English is the default for everyone; French is opt-in via the switcher.
   localeDetection: false,
+  // hreflang alternates come from page metadata; skip the duplicate Link header.
+  alternateLinks: false,
 });
 
 export type Locale = (typeof routing.locales)[number];

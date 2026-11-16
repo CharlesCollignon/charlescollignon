@@ -5,10 +5,9 @@ import { useTranslations } from "next-intl";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
-import FadeContent from "@/components/FadeContent";
 import TextType from "@/components/TextType";
 import { Magnetic } from "@/components/motion/magnetic";
-import { SplitReveal } from "@/components/motion/split-reveal";
+import { CssReveal } from "@/components/motion/css-reveal";
 
 gsap.registerPlugin(ScrollTrigger, useGSAP);
 
@@ -43,24 +42,21 @@ export function Hero() {
       className="relative flex min-h-dvh flex-col items-center justify-center"
     >
       <div data-hero-content className="page-x flex flex-col items-center text-center">
-        <FadeContent blur delay={0.2} duration={1.2}>
-          <p className="eyebrow mb-4 text-zinc-300 mix-blend-difference dark:text-zinc-400">
-            {t("role")}
-          </p>
-        </FadeContent>
+        <p
+          className="css-fade eyebrow mb-4 text-zinc-300 mix-blend-difference dark:text-zinc-400"
+          style={{ animationDelay: "0.2s" }}
+        >
+          {t("role")}
+        </p>
 
-        <SplitReveal
-          as="h1"
-          by="chars"
-          immediate
+        <CssReveal
+          text="Charles Collignon"
           delay={0.35}
           className="mb-6 text-display font-normal text-zinc-300 mix-blend-difference dark:text-zinc-200"
-        >
-          Charles Collignon
-        </SplitReveal>
+        />
 
         <div className="flex min-h-15 max-w-xl items-center justify-center md:min-h-17.5">
-          <FadeContent delay={0.9} duration={1.2}>
+          <div className="css-fade" style={{ animationDelay: "0.9s" }}>
             <TextType
               text={lines}
               initialDelay={900}
@@ -72,11 +68,13 @@ export function Hero() {
               cursorBlinkDuration={0.7}
               className="text-lead text-zinc-300 mix-blend-difference dark:text-zinc-200"
             />
-          </FadeContent>
+          </div>
         </div>
 
-        <FadeContent delay={1.3} duration={1.2}>
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-3 md:mt-12 md:gap-4">
+        <div
+          className="css-fade mt-8 flex flex-wrap items-center justify-center gap-3 md:mt-12 md:gap-4"
+          style={{ animationDelay: "1.3s" }}
+        >
             <Magnetic>
               <a
                 href="#work"
@@ -93,14 +91,12 @@ export function Hero() {
                 {t("ctaContact")}
               </a>
             </Magnetic>
-          </div>
-        </FadeContent>
+        </div>
       </div>
 
-      <FadeContent
-        delay={2}
-        duration={1}
-        className="absolute bottom-6 left-1/2 -translate-x-1/2 md:bottom-8"
+      <div
+        className="css-fade absolute bottom-6 left-1/2 -translate-x-1/2 md:bottom-8"
+        style={{ animationDelay: "2s" }}
       >
         <a
           href="#about"
@@ -111,7 +107,7 @@ export function Hero() {
             <span className="scroll-cue absolute inset-x-0 top-0 h-1/2 bg-zinc-300" />
           </span>
         </a>
-      </FadeContent>
+      </div>
     </section>
   );
 }

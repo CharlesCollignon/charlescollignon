@@ -284,5 +284,10 @@
       },
       "outcome": "The rebuilt platform runs on TanStack Start, with architecture layers enforced by dependency-cruiser, 611 Vitest tests, and English and French throughout."
     }
+  },
+  "notFound": {
+    "title": "Page not found",
+    "body": "This page doesn't exist, or it moved.",
+    "home": "Back home"
   }
 }

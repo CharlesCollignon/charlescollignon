@@ -272,3 +272,47 @@ html {
     animation: none;
   }
 }
+
+/* CSS-only masked slide-up (hero title). */
+.css-reveal-mask {
+  display: block;
+  overflow: hidden;
+  padding-bottom: 0.14em;
+  margin-bottom: -0.14em;
+}
+
+.css-reveal {
+  display: block;
+  animation: css-reveal 1.4s var(--ease-out-expo) both;
+}
+
+@keyframes css-reveal {
+  from {
+    transform: translateY(105%) skewY(4deg);
+    filter: blur(6px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .css-reveal {
+    animation: none;
+  }
+}
+
+/* CSS-only fade-in for above-the-fold content (no wait for hydration). */
+.css-fade {
+  animation: css-fade 1.2s ease-out both;
+}
+
+@keyframes css-fade {
+  from {
+    opacity: 0;
+    filter: blur(10px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .css-fade {
+    animation: none;
+  }
+}

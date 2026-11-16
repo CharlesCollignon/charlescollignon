@@ -68,7 +68,7 @@ export function CaseStudy({ project }: { project: Project }) {
         <div className="flex flex-col gap-6">
           <Link
             href="/#work"
-            className="eyebrow w-fit opacity-60 transition-opacity hover:opacity-100"
+            className="eyebrow w-fit opacity-70 transition-opacity hover:opacity-100"
           >
             ← {t("caseStudy.back")}
           </Link>
@@ -108,7 +108,7 @@ export function CaseStudy({ project }: { project: Project }) {
                 </a>
               </Magnetic>
             ) : (
-              <span className="eyebrow opacity-60">{t("caseStudy.private")}</span>
+              <span className="eyebrow opacity-70">{t("caseStudy.private")}</span>
             )}
             {project.repo && (
               <a
@@ -150,7 +150,7 @@ export function CaseStudy({ project }: { project: Project }) {
       {/* In numbers */}
       {project.metrics.length > 0 && (
         <section className="page-x pb-section">
-          <h2 className="eyebrow mb-8 opacity-60">{t("caseStudy.inNumbers")}</h2>
+          <h2 className="eyebrow mb-8 opacity-70">{t("caseStudy.inNumbers")}</h2>
           <dl className="grid grid-cols-2 gap-x-6 gap-y-10 lg:grid-cols-4">
             {project.metrics.map((m) => (
               <div key={m.key} className="flex flex-col gap-2 border-t border-current/15 pt-5">
@@ -168,7 +168,7 @@ export function CaseStudy({ project }: { project: Project }) {
       <section className="page-x grid gap-14 pb-section md:grid-cols-2 md:gap-10 lg:gap-24">
         {(["challenge", "approach"] as const).map((key) => (
           <div key={key} className="flex flex-col gap-5">
-            <h2 className="eyebrow opacity-60">{t(`caseStudy.${key}`)}</h2>
+            <h2 className="eyebrow opacity-70">{t(`caseStudy.${key}`)}</h2>
             <FadeContent>
               <p className="text-lead">{c(key)}</p>
             </FadeContent>
@@ -184,14 +184,14 @@ export function CaseStudy({ project }: { project: Project }) {
           <div className="grid gap-10 lg:grid-cols-12">
             <div className="lg:col-span-4">
               <div className="lg:sticky lg:top-28">
-                <h2 className="eyebrow opacity-60">{t("caseStudy.highlights")}</h2>
+                <h2 className="eyebrow opacity-70">{t("caseStudy.highlights")}</h2>
               </div>
             </div>
             <ol className="flex flex-col lg:col-span-8">
               {project.highlights.map((key, i) => (
                 <li key={key} className="group border-t border-current/15 py-8 last:border-b md:py-10">
                   <FadeContent className="grid gap-3 md:grid-cols-[4rem_1fr] md:gap-6">
-                    <span className="font-mono text-sm" style={{ color: project.slug === "phronesis" ? undefined : project.accent }}>
+                    <span className="font-mono text-sm" style={{ color: project.slug === "phronesis" ? undefined : (project.accentText ?? project.accent) }}>
                       {String(i + 1).padStart(2, "0")}
                     </span>
                     <div className="flex flex-col gap-3">
@@ -222,7 +222,7 @@ export function CaseStudy({ project }: { project: Project }) {
       {/* Outcome */}
       <section className="page-x pb-section">
         <div className="flex max-w-4xl flex-col gap-5">
-          <h2 className="eyebrow opacity-60">{t("caseStudy.outcome")}</h2>
+          <h2 className="eyebrow opacity-70">{t("caseStudy.outcome")}</h2>
           <SplitReveal as="p" className="text-[clamp(1.5rem,1rem+2vw,2.75rem)] font-medium leading-tight tracking-tight">
             {c("outcome")}
           </SplitReveal>
@@ -237,7 +237,7 @@ export function CaseStudy({ project }: { project: Project }) {
 function Meta({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <span className="eyebrow opacity-55">{label}</span>
+      <span className="eyebrow opacity-70">{label}</span>
       <span className="leading-relaxed">{children}</span>
     </div>
   );
@@ -261,7 +261,7 @@ function MipSection({ accent }: { accent: string }) {
       {blocks.map((b) => (
         <figure key={b.key} className="flex flex-col gap-6">
           <div className="rounded-3xl border border-current/10 p-4 md:p-10">{b.node}</div>
-          <figcaption className="text-sm opacity-60">{b.caption}</figcaption>
+          <figcaption className="text-sm opacity-70">{b.caption}</figcaption>
         </figure>
       ))}
     </section>
@@ -309,7 +309,7 @@ function Gallery({
 
   return (
     <section ref={ref} className="flex flex-col justify-center gap-8 pb-section md:h-dvh md:pb-0">
-      <h2 className="page-x eyebrow opacity-60">{title}</h2>
+      <h2 className="page-x eyebrow opacity-70">{title}</h2>
       <div
         data-track
         className="flex gap-6 overflow-x-auto px-gutter pb-4 max-md:snap-x max-md:snap-mandatory md:w-max md:gap-10 md:overflow-visible"
@@ -353,7 +353,7 @@ function PhoneRow({ shots, caption }: { shots: Project["shots"]; caption: (key: 
         {shots.map((s) => (
           <figure key={s.key} data-phone className="flex flex-col gap-3">
             <PhoneFrame image={s} alt={caption(s.key)} />
-            <figcaption className="text-center text-xs opacity-60">{caption(s.key)}</figcaption>
+            <figcaption className="text-center text-xs opacity-70">{caption(s.key)}</figcaption>
           </figure>
         ))}
       </div>
@@ -370,7 +370,7 @@ function NextProject({ project, label, title }: { project: Project; label: strin
       style={{ backgroundColor: project.accent, color: project.onAccent }}
     >
       <div className="page-x flex min-h-[60dvh] flex-col justify-between gap-10 py-12 md:py-16">
-        <span className="eyebrow opacity-70">{label}</span>
+        <span className="eyebrow">{label}</span>
         <div className="flex items-end justify-between gap-6">
           <span className="text-display font-semibold transition-transform duration-700 ease-out-expo group-hover:-translate-y-2">
             {title}

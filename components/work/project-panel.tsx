@@ -69,7 +69,7 @@ export function ProjectPanel({
                 <dd>
                   <span
                     className="block text-2xl font-semibold tabular-nums"
-                    style={{ color: project.slug === "phronesis" ? undefined : project.accent }}
+                    style={{ color: project.slug === "phronesis" ? undefined : (project.accentText ?? project.accent) }}
                   >
                     {m.prefix}
                     {format.number(m.value)}
@@ -105,7 +105,7 @@ export function ProjectPanel({
                 {t("work.viewLive")} <span aria-hidden>↗</span>
               </a>
             )}
-            <ul className="flex flex-wrap gap-x-3 gap-y-1 text-xs opacity-55 max-md:hidden">
+            <ul className="flex flex-wrap gap-x-3 gap-y-1 text-xs opacity-75 max-md:hidden">
               {project.stack.slice(0, 4).map((s) => (
                 <li key={s}>{s}</li>
               ))}
