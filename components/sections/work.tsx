@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { Fragment, useRef } from "react";
 import { useTranslations } from "next-intl";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -56,15 +56,16 @@ export function Work() {
           );
         }
 
-        // As the next panel slides over, this one sinks back and dims.
+        // As the next panel slides over, this one sinks back and dims. The dim
+        // is an overlay's opacity, not a CSS filter: filtering a full-screen
+        // layer holding a very tall screenshot flashed black frames.
         if (next) {
-          gsap.to(panel, {
-            scale: 0.92,
-            filter: "brightness(0.55)",
-            borderRadius: "2.5rem",
-            ease: "none",
+          const tl = gsap.timeline({
             scrollTrigger: { trigger: next, start: "top bottom", end: "top top", scrub: true },
           });
+          tl.to(panel, { scale: 0.92, borderRadius: "2.5rem", ease: "none" }, 0);
+          const dim = panel.querySelector("[data-dim]");
+          if (dim) tl.to(dim, { opacity: 0.6, ease: "none" }, 0);
         }
       });
     },
@@ -86,17 +87,18 @@ export function Work() {
 
       <div ref={stackRef} className="relative">
         {featuredProjects.map((project, i) => (
-          <div
-            key={project.slug}
-            data-slot
-            className="sticky top-0 h-dvh"
-          >
-            <ProjectPanel
-              project={project}
-              index={i}
-              total={featuredProjects.length}
-            />
-          </div>
+          <Fragment key={project.slug}>
+            <div data-slot className="sticky top-0 h-dvh">
+              <ProjectPanel
+                project={project}
+                index={i}
+                total={featuredProjects.length}
+              />
+            </div>
+            {/* Hold: the panel stays pinned and bright for a while before the
+                next one starts sliding over it. */}
+            <div aria-hidden className="pointer-events-none h-[45dvh]" />
+          </Fragment>
         ))}
       </div>
 

@@ -33,6 +33,13 @@ export function ProjectPanel({
       className="relative flex h-full flex-col overflow-hidden rounded-t-[1.75rem] md:rounded-t-[2.5rem]"
       style={{ backgroundColor: project.surface, color: project.onSurface }}
     >
+      {/* Darkens as the next panel slides over (driven by the Work section) */}
+      <div
+        aria-hidden
+        data-dim
+        className="pointer-events-none absolute inset-0 z-10 bg-black opacity-0"
+      />
+
       {/* Soft accent light behind the product */}
       <div
         aria-hidden

@@ -292,7 +292,8 @@ export function MipBeforeAfter({ accent }: { accent: string }) {
 // Deterministic star field (no Math.random, so server and client agree).
 const STARS = Array.from({ length: 90 }, (_, i) => {
   const r = (n: number) => ((Math.sin(i * 12.9898 + n * 78.233) * 43758.5453) % 1 + 1) % 1;
-  return { x: r(1) * 960, y: r(2) * 300, s: 0.6 + r(3) * 1.4, d: 2 + r(4) * 4 };
+  const round = (n: number) => Math.round(n * 100) / 100;
+  return { x: round(r(1) * 960), y: round(r(2) * 300), s: round(0.6 + r(3) * 1.4), d: round(2 + r(4) * 4) };
 });
 
 export function MipHorizon({ accent, className }: { accent: string; className?: string }) {

@@ -13,15 +13,17 @@ const CY = H / 2;
 const RX = 290;
 const RY = 200;
 const EASE = [0.16, 1, 0.3, 1] as const;
+/** Round so server and client serialise identical SVG attributes. */
+const r2 = (n: number) => Math.round(n * 100) / 100;
 
 const nodes = mipCategories.map((c, i) => {
   const angle = -Math.PI / 2 + (i / mipCategories.length) * Math.PI * 2;
-  const x = CX + Math.cos(angle) * RX;
-  const y = CY + Math.sin(angle) * RY;
+  const x = r2(CX + Math.cos(angle) * RX);
+  const y = r2(CY + Math.sin(angle) * RY);
   // Module dots sit on a small ring around the category node.
   const dots = Array.from({ length: c.modules }, (_, j) => {
     const a = angle + Math.PI + ((j - (c.modules - 1) / 2) * Math.PI) / 7;
-    return { x: x + Math.cos(a) * 24, y: y + Math.sin(a) * 24 };
+    return { x: r2(x + Math.cos(a) * 24), y: r2(y + Math.sin(a) * 24) };
   });
   return { ...c, angle, x, y, dots };
 });
