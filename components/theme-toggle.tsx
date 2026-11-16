@@ -7,7 +7,7 @@ import { motion } from "motion/react";
  * Both icons are rendered and swapped with the `dark:` variant, so the server
  * markup never depends on the (client-only) resolved theme.
  */
-export function ThemeToggle() {
+export function ThemeToggle({ label = "Toggle theme" }: { label?: string }) {
   const { resolvedTheme, setTheme } = useTheme();
 
   return (
@@ -17,7 +17,7 @@ export function ThemeToggle() {
       className="relative flex size-10 items-center justify-center rounded-full bg-zinc-200 text-zinc-700 transition-colors hover:bg-zinc-300 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
       whileHover={{ scale: 1.05 }}
       whileTap={{ scale: 0.95 }}
-      aria-label="Toggle theme"
+      aria-label={label}
     >
       <svg
         xmlns="http://www.w3.org/2000/svg"

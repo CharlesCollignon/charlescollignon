@@ -1,0 +1,66 @@
+{
+  "meta": {
+    "title": "Charles Collignon | Engineering Manager, Design and Product",
+    "description": "Portfolio of Charles Collignon, Engineering Manager for Design and Product. I design and build products end to end, from interface and design system to production code."
+  },
+  "nav": {
+    "about": "About",
+    "work": "Work",
+    "contact": "Contact",
+    "skip": "Skip to content",
+    "language": "Language",
+    "switchTo": "Passer en français",
+    "theme": "Toggle theme"
+  },
+  "hero": {
+    "role": "Engineering Manager, Design and Product",
+    "lines": [
+      "I design and build products, end to end.",
+      "Interface, design system, production code.",
+      "Calm software for complex data."
+    ],
+    "ctaWork": "View work",
+    "ctaContact": "Get in touch"
+  },
+  "about": {
+    "eyebrow": "About",
+    "title": "Building digital experiences",
+    "p1": "I'm an engineering manager working across design and product. I take products from first sketch to production: interface, design system and the code that ships them.",
+    "p2": "At QuantCube Technology I lead design and frontend engineering for the Macro Intelligence Platform. On my own time I build products like Phronesis and Pluclair."
+  },
+  "work": {
+    "eyebrow": "Selected work",
+    "title": "Projects",
+    "visit": "Visit",
+    "caseStudy": "Case study",
+    "private": "Private platform"
+  },
+  "projects": {
+    "phronesis": {
+      "title": "Phronesis",
+      "tagline": "Understand before you judge: French laws, votes and elected officials, explained without taking sides."
+    },
+    "pluclair": {
+      "title": "Pluclair",
+      "tagline": "A calm personal-finance ledger for France, on the web and Android."
+    },
+    "mip": {
+      "title": "Macro Intelligence Platform",
+      "tagline": "Daily macroeconomic nowcasts for institutional analysts, rebuilt around one config-driven engine."
+    },
+    "bitcoin-tracker": {
+      "title": "Bitcoin Tracker",
+      "tagline": "A real-time dashboard for Binance trades."
+    }
+  },
+  "contact": {
+    "eyebrow": "Contact",
+    "title": "Let's work together",
+    "copy": "Copy email",
+    "copied": "Copied"
+  },
+  "footer": {
+    "rights": "All rights reserved.",
+    "built": "Built with Next.js, Spline, GSAP and Motion"
+  }
+}

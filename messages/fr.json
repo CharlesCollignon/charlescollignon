@@ -1,0 +1,66 @@
+{
+  "meta": {
+    "title": "Charles Collignon | Engineering Manager, Design et Produit",
+    "description": "Portfolio de Charles Collignon, Engineering Manager Design et Produit. Je conçois et je construis des produits de bout en bout, de l'interface et du design system jusqu'au code en production."
+  },
+  "nav": {
+    "about": "À propos",
+    "work": "Projets",
+    "contact": "Contact",
+    "skip": "Aller au contenu",
+    "language": "Langue",
+    "switchTo": "Switch to English",
+    "theme": "Changer de thème"
+  },
+  "hero": {
+    "role": "Engineering Manager, Design et Produit",
+    "lines": [
+      "Je conçois et je construis des produits, de bout en bout.",
+      "Interface, design system, code en production.",
+      "Des logiciels sereins pour des données complexes."
+    ],
+    "ctaWork": "Voir les projets",
+    "ctaContact": "Me contacter"
+  },
+  "about": {
+    "eyebrow": "À propos",
+    "title": "Construire des expériences numériques",
+    "p1": "Je suis engineering manager entre design et produit. J'emmène les produits du premier croquis jusqu'à la production : interface, design system et le code qui les livre.",
+    "p2": "Chez QuantCube Technology, je dirige le design et l'ingénierie frontend de la Macro Intelligence Platform. En parallèle, je construis des produits comme Phronesis et Pluclair."
+  },
+  "work": {
+    "eyebrow": "Projets choisis",
+    "title": "Projets",
+    "visit": "Visiter",
+    "caseStudy": "Étude de cas",
+    "private": "Plateforme privée"
+  },
+  "projects": {
+    "phronesis": {
+      "title": "Phronesis",
+      "tagline": "Comprendre avant de juger : les lois, les votes et les élus français, expliqués sans prendre parti."
+    },
+    "pluclair": {
+      "title": "Pluclair",
+      "tagline": "Un carnet de finances personnelles serein pour la France, sur le web et Android."
+    },
+    "mip": {
+      "title": "Macro Intelligence Platform",
+      "tagline": "Des nowcasts macroéconomiques quotidiens pour analystes institutionnels, reconstruits autour d'un moteur piloté par configuration."
+    },
+    "bitcoin-tracker": {
+      "title": "Bitcoin Tracker",
+      "tagline": "Un tableau de bord temps réel pour les trades Binance."
+    }
+  },
+  "contact": {
+    "eyebrow": "Contact",
+    "title": "Travaillons ensemble",
+    "copy": "Copier l'e-mail",
+    "copied": "Copié"
+  },
+  "footer": {
+    "rights": "Tous droits réservés.",
+    "built": "Construit avec Next.js, Spline, GSAP et Motion"
+  }
+}

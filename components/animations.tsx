@@ -61,24 +61,6 @@ export function StaggerItem({
   );
 }
 
-interface MagneticProps {
-  children: ReactNode;
-  className?: string;
-}
-
-export function Magnetic({ children, className = "" }: MagneticProps) {
-  return (
-    <motion.div
-      className={className}
-      whileHover={{ scale: 1.02 }}
-      whileTap={{ scale: 0.98 }}
-      transition={{ type: "spring", stiffness: 400, damping: 17 }}
-    >
-      {children}
-    </motion.div>
-  );
-}
-
 interface HoverLinkProps {
   href: string;
   children: ReactNode;
