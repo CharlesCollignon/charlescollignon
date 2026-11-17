@@ -50,7 +50,7 @@ export function Header() {
   }, [open, lenis]);
 
   const pill =
-    "flex items-center gap-1 rounded-full border border-zinc-900/10 bg-white/85 p-1.5 shadow-[0_8px_30px_rgb(0_0_0/0.06)] backdrop-blur-xl dark:border-white/10 dark:bg-zinc-950/80";
+    "glass flex items-center gap-1 rounded-full p-1.5";
 
   return (
     <>
@@ -74,7 +74,7 @@ export function Header() {
                 {active === id && (
                   <motion.span
                     layoutId="nav-active"
-                    className="absolute inset-0 rounded-full bg-zinc-900/[0.07] dark:bg-white/10"
+                    className="absolute inset-0 rounded-full bg-zinc-900/[0.08] shadow-[inset_0_1px_0_rgb(255_255_255/0.6)] dark:bg-white/[0.14] dark:shadow-[inset_0_1px_0_rgb(255_255_255/0.08)]"
                     transition={{ type: "spring", stiffness: 380, damping: 32 }}
                   />
                 )}
@@ -86,7 +86,7 @@ export function Header() {
                     "relative block rounded-full px-4 py-2 text-sm font-medium transition-colors",
                     active === id
                       ? "text-zinc-900 dark:text-zinc-50"
-                      : "text-zinc-600 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-white",
+                      : "text-zinc-800 hover:text-zinc-950 dark:text-zinc-100 dark:hover:text-white",
                   )}
                 >
                   {t(id)}
@@ -104,7 +104,7 @@ export function Header() {
             href={pathname}
             locale={other}
             aria-label={t("switchTo")}
-            className="flex size-10 items-center justify-center rounded-full text-xs font-semibold uppercase tracking-wider text-zinc-600 transition-colors hover:bg-zinc-900/[0.07] hover:text-zinc-900 dark:text-zinc-300 dark:hover:bg-white/10 dark:hover:text-white"
+            className="flex size-10 items-center justify-center rounded-full text-xs font-semibold uppercase tracking-wider text-zinc-800 transition-colors hover:bg-zinc-900/[0.08] hover:text-zinc-950 dark:text-zinc-100 dark:hover:bg-white/10 dark:hover:text-white"
           >
             {other}
           </Link>
@@ -129,7 +129,7 @@ export function Header() {
             role="dialog"
             aria-modal="true"
             aria-label={t("menu")}
-            className="fixed inset-0 z-60 flex flex-col bg-zinc-950 px-gutter pb-10 pt-4 text-white md:hidden"
+            className="fixed inset-0 z-60 flex flex-col bg-zinc-950/55 px-gutter pb-10 pt-4 text-white backdrop-blur-2xl backdrop-saturate-150 md:hidden"
             initial={{ clipPath: "circle(0% at 85% 2.5rem)" }}
             animate={{ clipPath: "circle(150% at 85% 2.5rem)" }}
             exit={{ clipPath: "circle(0% at 85% 2.5rem)" }}
@@ -141,7 +141,7 @@ export function Header() {
                 type="button"
                 autoFocus
                 onClick={() => setOpen(false)}
-                className="h-10 rounded-full border border-white/20 px-4 text-sm font-medium"
+                className="h-10 rounded-full border border-white/25 bg-white/10 px-4 text-sm font-medium"
               >
                 {t("close")}
               </button>
