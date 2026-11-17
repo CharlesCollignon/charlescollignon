@@ -241,17 +241,6 @@ html {
   }
 }
 
-/* Marquee: each track slides by its own width; the duplicate fills the gap. */
-@keyframes marquee {
-  to {
-    transform: translateX(-100%);
-  }
-}
-
-.marquee-track {
-  animation: marquee linear infinite;
-}
-
 /* Hero scroll cue: a short bar sliding down a hairline. */
 @keyframes scroll-cue {
   0% {
@@ -267,7 +256,6 @@ html {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .marquee-track,
   .scroll-cue {
     animation: none;
   }
