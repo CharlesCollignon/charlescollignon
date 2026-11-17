@@ -9,6 +9,7 @@ import { motion } from "motion/react";
 import type { Project, Visual } from "@/content/projects";
 import { featuredProjects } from "@/content/projects";
 import { Link } from "@/i18n/navigation";
+import { toneFor } from "@/lib/tone";
 import FadeContent from "@/components/FadeContent";
 import { SplitReveal } from "@/components/motion/split-reveal";
 import { CountUp } from "@/components/motion/count-up";
@@ -45,6 +46,7 @@ export function CaseStudy({ project }: { project: Project }) {
   return (
     <div
       className="relative min-h-dvh"
+      data-header-tone={toneFor(project.surface)}
       style={
         {
           backgroundColor: project.surface,
@@ -367,6 +369,7 @@ function NextProject({ project, label, title }: { project: Project; label: strin
       href={`/work/${project.slug}`}
       data-cursor={label}
       className="group relative block overflow-hidden"
+      data-header-tone={toneFor(project.accent)}
       style={{ backgroundColor: project.accent, color: project.onAccent }}
     >
       <div className="page-x flex min-h-[60dvh] flex-col justify-between gap-10 py-12 md:py-16">

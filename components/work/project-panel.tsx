@@ -4,6 +4,7 @@ import { useFormatter, useTranslations } from "next-intl";
 import type { Project } from "@/content/projects";
 import { Magnetic } from "@/components/motion/magnetic";
 import { Link } from "@/i18n/navigation";
+import { toneFor } from "@/lib/tone";
 import { Tilt } from "@/components/motion/tilt";
 import { BrowserFrame, PhoneFrame } from "./frames";
 import { MipConstellation } from "./mip-constellation";
@@ -30,6 +31,7 @@ export function ProjectPanel({
   return (
     <article
       data-panel
+      data-header-tone={toneFor(project.surface)}
       className="relative flex h-full flex-col overflow-hidden rounded-t-[1.75rem] md:rounded-t-[2.5rem]"
       style={{ backgroundColor: project.surface, color: project.onSurface }}
     >

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { AnimatePresence, motion } from "motion/react";
 import { ThemeToggle } from "./theme-toggle";
@@ -33,6 +33,36 @@ export function Header() {
   const active = useActiveSection([...SECTIONS]);
   const lenis = useLenis();
   const [open, setOpen] = useState(false);
+  const navRef = useRef<HTMLElement>(null);
+  const [tone, setTone] = useState<"light" | "dark" | null>(null);
+
+  // Match the glass to what's directly under it: a fixed-colour section
+  // declares its tone; otherwise follow the site theme.
+  useEffect(() => {
+    let frame = 0;
+    const sample = () => {
+      frame = 0;
+      const nav = navRef.current;
+      if (!nav) return;
+      const r = nav.getBoundingClientRect();
+      const under = document
+        .elementsFromPoint(r.left + r.width / 2, r.top + r.height / 2)
+        .find((el) => !nav.contains(el) && el.closest("[data-header-tone]"));
+      const next = under?.closest<HTMLElement>("[data-header-tone]")?.dataset.headerTone;
+      setTone(next === "light" || next === "dark" ? next : null);
+    };
+    const schedule = () => {
+      if (!frame) frame = requestAnimationFrame(sample);
+    };
+    window.addEventListener("scroll", schedule, { passive: true });
+    window.addEventListener("resize", schedule);
+    sample();
+    return () => {
+      window.removeEventListener("scroll", schedule);
+      window.removeEventListener("resize", schedule);
+      cancelAnimationFrame(frame);
+    };
+  }, [pathname]);
   const onHome = pathname === "/";
 
   // Lock scrolling behind the open menu; close it with Escape.
@@ -58,7 +88,11 @@ export function Header() {
         className="css-fade fixed inset-x-0 top-3 z-50 flex justify-center px-3 md:top-4"
         style={{ animationDelay: "1.3s" }}
       >
-        <nav aria-label="Main" className={pill}>
+        <nav
+          ref={navRef}
+          aria-label="Main"
+          className={cn(pill, tone && `tone-${tone}`, "transition-[background-color,border-color] duration-300")}
+        >
           <NavLink
             id="main"
             onHome={onHome}

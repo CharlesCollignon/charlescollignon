@@ -4,8 +4,9 @@ import { useTheme } from "next-themes";
 import { motion } from "motion/react";
 
 /**
- * Both icons are rendered and swapped with the `dark:` variant, so the server
- * markup never depends on the (client-only) resolved theme.
+ * Both icons are rendered and swapped by the theme class on <html> (not the
+ * `dark:` variant, which a local tone override can flip), so the server
+ * markup never depends on the client-only resolved theme.
  */
 export function ThemeToggle({ label = "Toggle theme" }: { label?: string }) {
   const { resolvedTheme, setTheme } = useTheme();
@@ -30,7 +31,7 @@ export function ThemeToggle({ label = "Toggle theme" }: { label?: string }) {
         strokeLinecap="round"
         strokeLinejoin="round"
         aria-hidden
-        className="hidden transition-transform duration-300 dark:block"
+        className="hidden transition-transform duration-300 [.dark_&]:block"
       >
         <circle cx="12" cy="12" r="4" />
         <path d="M12 2v2" />
@@ -53,7 +54,7 @@ export function ThemeToggle({ label = "Toggle theme" }: { label?: string }) {
         strokeLinecap="round"
         strokeLinejoin="round"
         aria-hidden
-        className="block rotate-[40deg] dark:hidden"
+        className="block rotate-[40deg] [.dark_&]:hidden"
       >
         <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
       </svg>
