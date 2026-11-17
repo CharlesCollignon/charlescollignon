@@ -17,8 +17,20 @@ Live at [charlescollignon.com](https://www.charlescollignon.com) (English) and
 - TypeScript and Tailwind CSS 4
 - `next-intl`
 - GSAP (ScrollTrigger, SplitText), Lenis and Motion
-- three.js with React Three Fiber (model: `public/models/robot.glb`, optimised from `assets/models/robot.source.glb` by `npm run optimize:robot`)
+- three.js with React Three Fiber, for the robot
 - Vercel Analytics and Speed Insights
+
+## The robot
+
+The robot is a GLB exported from Spline. It is animated in code (`components/robot/`), with motion-capture clips from Mixamo blended in.
+
+| Step | Command | Result |
+| --- | --- | --- |
+| Optimise the model | `npm run robot:optimize` | `assets/models/robot.source.glb` → `public/models/robot.glb` |
+| Make the Mixamo upload | `npm run robot:mixamo` | a T-posed single-mesh OBJ, `assets/models/robot-tpose.obj` |
+| Bake the animations | `npm run robot:bake` | `assets/animations/*.fbx` (Mixamo, *FBX Binary, Without Skin, 30 fps*) → `public/models/robot-clips.json` |
+
+The bake retargets each Mixamo bone onto the matching robot part, so the robot keeps its materials, LED face and emblem. To add an animation, drop the FBX in `assets/animations/`, run the bake, then reference the clip by its file name in `components/robot/rig.ts`.
 
 ## Develop
 

@@ -1,6 +1,8 @@
 import {
   Color,
+  Euler,
   PropertyBinding,
+  Quaternion,
   Raycaster,
   Vector2,
   type Camera,
@@ -9,6 +11,7 @@ import {
   type Object3D,
 } from "three";
 import { EYE_COLS, EYE_ROWS, FACES, FACE_COLORS, type Expression } from "./face";
+import { sampleBone, sampleHipsY, type ClipSet } from "./clips";
 
 /**
  * Procedural animation for the robot (public/models/robot.glb). The model has
@@ -26,6 +29,10 @@ import { EYE_COLS, EYE_ROWS, FACES, FACE_COLORS, type Expression } from "./face"
  *     tilt, point, spin. Triggered by sections, clicks, idling and tab
  *     returns.
  *  6. Momentum: fast scrolling throws the arms out and startles the face.
+ *  7. Motion capture (when loaded): Mixamo clips retargeted onto the parts
+ *     (clips.ts). A breathing idle loops underneath everything; gestures
+ *     (handshake, jump, look around) crossfade in. Every layer above is
+ *     applied on top of the clip pose, so scroll, pointer and face still work.
  *
  * Everything eases with frame-rate independent damping. Units are Spline's.
  */
@@ -75,7 +82,17 @@ type Offsets = {
   forearmX?: [number, number];
 };
 
-export type ActionName = "wave" | "hop" | "stretch" | "curious" | "point" | "spin" | "lookUp";
+export type ActionName =
+  | "wave"
+  | "hop"
+  | "stretch"
+  | "curious"
+  | "point"
+  | "spin"
+  | "lookUp"
+  | "handshake"
+  | "jump"
+  | "look";
 type Action = {
   duration: number;
   /** Offsets at normalised time p, before the envelope is applied. */
@@ -84,6 +101,8 @@ type Action = {
   /** Hops and spins carry their own easing: no envelope. */
   raw?: boolean;
   face?: Expression;
+  /** Motion-capture clip to play instead; `pose` is the fallback without clips. */
+  clip?: string;
 };
 
 const ACTIONS: Record<ActionName, Action> = {
@@ -113,9 +132,9 @@ const ACTIONS: Record<ActionName, Action> = {
   },
   // Both arms up, look up, settle.
   stretch: {
-    duration: 2.4,
+    duration: 3.2,
     face: "sleepy",
-    fade: [0.3, 0.35],
+    fade: [0.22, 0.25],
     pose: () => ({ armZ: [2.6, 2.6], elbowZ: [0.3, 0.3], headRx: -0.25, topRx: -0.08 }),
   },
   // Head tilt with a little shrug.
@@ -149,6 +168,28 @@ const ACTIONS: Record<ActionName, Action> = {
     face: "surprised",
     pose: () => ({ headRx: -0.38, topRx: -0.1, armZ: [0.25, 0.25] }),
   },
+  // Motion capture, with hand-made fallbacks.
+  handshake: {
+    duration: 2.6,
+    face: "happy",
+    clip: "shaking-hands-2",
+    fade: [0.12, 0.15],
+    pose: (p, t) => ACTIONS.wave.pose(p, t),
+  },
+  jump: {
+    duration: 0.95,
+    face: "happy",
+    clip: "running-jump",
+    fade: [0.08, 0.2],
+    pose: (p, t) => ACTIONS.hop.pose(p, t),
+  },
+  look: {
+    duration: 2,
+    face: "curious",
+    clip: "looking",
+    fade: [0.1, 0.12],
+    pose: (p, t) => ACTIONS.curious.pose(p, t),
+  },
 };
 
 /** Section moods: held while in the section, blended in and out. */
@@ -165,7 +206,7 @@ const MOODS: Record<string, { face: Expression; pose: (t: number) => Offsets }> 
 /** What to do when arriving in a section (at most every few seconds). */
 const ON_ENTER: Record<string, ActionName[]> = {
   work: ["lookUp"],
-  contact: ["wave", "point"],
+  contact: ["handshake"],
 };
 
 /**
@@ -218,6 +259,18 @@ export function createRig(
   const forearms = all("forearm").map(joint);
   const elbows = all("elbow").map(joint);
   const shoulders = all("Hand LEFT").map(joint);
+  const legs = [...all("Leg Left"), ...all("Leg Left Instance")].map(joint);
+  const shins = all("shin").map(joint);
+  const feet = all("Foot").map(joint);
+
+  // Motion capture, once loaded: which bone drives each part.
+  let clipSet: ClipSet | null = null;
+  const boneOf = new Map<Object3D, string>();
+  const BASE_CLIP = "breathing-idle";
+  const clipQ = new Quaternion();
+  const blendQ = new Quaternion();
+  const offQ = new Quaternion();
+  const euler = new Euler();
 
   /* ---------------------------------------------------------- sections */
 
@@ -298,7 +351,7 @@ export function createRig(
       play("spin", true);
       clicks = [];
     } else {
-      play("hop", true);
+      play("jump", true);
     }
   };
 
@@ -311,6 +364,12 @@ export function createRig(
   /* ---------------------------------------------------------- actions */
 
   type Running = { name: ActionName; start: number };
+  /** An action's length: its clip's when motion capture is loaded. */
+  const durationOf = (name: ActionName) => {
+    const clipName = ACTIONS[name].clip;
+    const clip = clipName ? clipSet?.clips[clipName] : undefined;
+    return clip ? clip.duration : ACTIONS[name].duration;
+  };
   let running: Running[] = [];
   let queue: ActionName[] = [];
   let clock = 0;
@@ -398,6 +457,14 @@ export function createRig(
 
   return {
     play,
+    /** Attach motion-capture clips (see clips.ts); before that, all procedural. */
+    setClips(set: ClipSet | null) {
+      clipSet = set;
+      boneOf.clear();
+      set?.parts.forEach((obj, bone) => boneOf.set(obj, bone));
+      // Parts the clips stop driving go back to their authored pose.
+      if (!set) [...legs, ...shins, ...feet].forEach((j) => j.obj.rotation.set(j.x, j.y, j.z));
+    },
     update(rawDt: number, t: number) {
       const dt = Math.min(rawDt, 0.05);
       clock = t;
@@ -439,7 +506,7 @@ export function createRig(
       }
 
       // Actions: retire finished ones, then start the next queued one.
-      running = running.filter((a) => t - a.start < ACTIONS[a.name].duration);
+      running = running.filter((a) => t - a.start < durationOf(a.name));
       if (!running.length && queue.length) play(queue.shift()!);
 
       // Now and then, when nothing else is going on, do something.
@@ -447,7 +514,7 @@ export function createRig(
       if (introDone && still && !running.length && !queue.length) {
         if (t > nextIdle) {
           const pool: ActionName[] =
-            section === "about" ? ["curious"] : ["curious", "stretch", "point", "wave"];
+            section === "about" ? ["curious", "look"] : ["look", "curious", "stretch", "point", "wave"];
           play(pool[Math.floor(Math.random() * pool.length)]);
           nextIdle = t + 9 + Math.random() * 7;
         }
@@ -465,11 +532,28 @@ export function createRig(
         if (moodWeight[key] > 0.001) add(acc, MOODS[key].pose(t), moodWeight[key]);
       }
       let face: Expression = MOODS[section]?.face ?? "neutral";
+      // Clip actions crossfade over the idle clip. Hand-made actions add their
+      // offsets, except on clip-driven limbs: there the action's tuned pose is
+      // a target the limb crossfades to (offsets on top of a mocap arm would
+      // rotate around the wrong axes).
+      const mocapOn = Boolean(clipSet?.clips[BASE_CLIP]);
+      let gesture: { clip: string; time: number; weight: number } | null = null;
+      let handmade: { off: Offsets; weight: number } | null = null;
       for (const a of running) {
         const def = ACTIONS[a.name];
-        const p = clamp((t - a.start) / def.duration, 0, 1);
+        const duration = durationOf(a.name);
+        const p = clamp((t - a.start) / duration, 0, 1);
         const w = def.raw ? 1 : envelope(p, def.fade?.[0] ?? 0.18, def.fade?.[1] ?? 0.22);
-        add(acc, def.pose(p, t), w);
+        const clip = def.clip && clipSet?.clips[def.clip];
+        if (clip) {
+          if (!gesture || w > gesture.weight) gesture = { clip: def.clip!, time: t - a.start, weight: w };
+        } else if (mocapOn) {
+          const { armX, armZ, elbowZ, forearmX, ...rest } = def.pose(p, t);
+          add(acc, rest, w);
+          if (!handmade || w > handmade.weight) handmade = { off: { armX, armZ, elbowZ, forearmX }, weight: w };
+        } else {
+          add(acc, def.pose(p, t), w);
+        }
         if (def.face && w > 0.3) face = def.face;
       }
       // Fast scrolling: arms fly out, the face startles.
@@ -487,6 +571,43 @@ export function createRig(
 
       const breathe = Math.sin(t * 1.7);
       const shift = Math.sin(t * 0.62);
+      const mocap = mocapOn;
+
+      // The motion-capture pose of a part (idle loop, crossfaded with the
+      // current gesture), or null when it isn't driven by a clip.
+      const clipPose = (obj: Object3D) => {
+        const bone = boneOf.get(obj);
+        const base = clipSet?.clips[BASE_CLIP];
+        if (!bone || !base || !sampleBone(base, bone, t % base.duration, blendQ)) return null;
+        if (gesture) {
+          const g = clipSet!.clips[gesture.clip];
+          if (sampleBone(g, bone, gesture.time, clipQ)) blendQ.slerp(clipQ, gesture.weight);
+        }
+        return blendQ;
+      };
+      // Part rotation = clip pose (or its rest pose) × additive offsets; a
+      // hand-made gesture (g, in the authored rest frame) crossfades over it.
+      const gestQ = new Quaternion();
+      const pose = (
+        j: { obj: Object3D; x: number; y: number; z: number },
+        ox: number,
+        oy: number,
+        oz: number,
+        g?: [number, number, number],
+      ) => {
+        const fromClip = clipPose(j.obj);
+        if (!fromClip) {
+          j.obj.rotation.set(j.x + ox, j.y + oy, j.z + oz);
+          return;
+        }
+        offQ.setFromEuler(euler.set(ox, oy, oz));
+        j.obj.quaternion.copy(fromClip).multiply(offQ);
+        if (g && handmade && handmade.weight > 0.001) {
+          gestQ.setFromEuler(euler.set(j.x + ox + g[0], j.y + oy + g[1], j.z + oz + g[2]));
+          j.obj.quaternion.slerp(gestQ, handmade.weight);
+        }
+      };
+      const hm = (key: "armX" | "armZ" | "elbowZ" | "forearmX", i: number) => handmade?.off[key]?.[i] ?? 0;
 
       camera.position.set(
         state.camX + pointer.sx * 45,
@@ -494,40 +615,53 @@ export function createRig(
         state.camZ,
       );
 
+      // Hips: the clip's own bob replaces the procedural breathing.
+      let hipsY = 0;
+      if (mocap) {
+        const base = clipSet!.clips[BASE_CLIP];
+        hipsY = sampleHipsY(base, t % base.duration);
+        if (gesture) {
+          const g = clipSet!.clips[gesture.clip];
+          hipsY += (sampleHipsY(g, gesture.time) - hipsY) * gesture.weight;
+        }
+      }
       bot.position.x = base.px + state.x;
-      bot.position.y = base.py + state.y + breathe * 2.5 - Math.abs(lean) * 40 + acc.botY;
-      bot.rotation.set(
+      bot.position.y =
+        base.py + state.y + (mocap ? hipsY : breathe * 2.5) - Math.abs(lean) * 40 + acc.botY;
+      // The scroll pose turns the whole robot; the clip moves the hips within it.
+      euler.set(
         base.rx + state.rx + pointer.sy * 0.04 + lean,
         base.ry + state.ry + pointer.sx * 0.28 + Math.sin(t * 0.31) * 0.05 + acc.botRy,
         base.rz + shift * 0.022 - pointer.sx * 0.03,
       );
+      bot.quaternion.setFromEuler(euler);
+      const hipsQ = clipPose(bot);
+      if (hipsQ) bot.quaternion.multiply(hipsQ);
 
-      if (hipsJ) hipsJ.obj.rotation.z = hipsJ.z - shift * 0.035;
-      if (topJ) {
-        topJ.obj.rotation.x = topJ.x + pointer.sy * 0.06 + breathe * 0.012 + acc.topRx;
-        topJ.obj.rotation.y = topJ.y + pointer.hx * 0.14;
-      }
-      if (headJ) {
-        headJ.obj.rotation.x = headJ.x + pointer.hy * 0.32 + acc.headRx;
-        headJ.obj.rotation.y = headJ.y + pointer.hx * 0.5 + acc.headRy;
-        headJ.obj.rotation.z = headJ.z - pointer.hx * 0.06 + acc.headRz;
-      }
+      if (hipsJ) hipsJ.obj.rotation.z = hipsJ.z - (mocap ? 0 : shift * 0.035);
+      if (topJ) pose(topJ, pointer.sy * 0.06 + (mocap ? 0 : breathe * 0.012) + acc.topRx, pointer.hx * 0.14, 0);
+      if (headJ) pose(headJ, pointer.hy * 0.32 + acc.headRx, pointer.hx * 0.5 + acc.headRy, -pointer.hx * 0.06 + acc.headRz);
 
-      // Arms: a slow, out-of-phase sway plus whatever moods and actions add.
-      arms.forEach((j, i) => {
-        j.obj.rotation.x = j.x + Math.sin(t * 0.9 + i * 0.7) * 0.12 + acc.armX[i];
-        j.obj.rotation.z = j.z + acc.armZ[i];
-      });
+      // Arms: the clip (or a slow procedural sway), plus moods and actions.
+      const sway = mocap ? 0 : 1;
+      arms.forEach((j, i) =>
+        pose(j, Math.sin(t * 0.9 + i * 0.7) * 0.12 * sway + acc.armX[i], 0, acc.armZ[i], [hm("armX", i), 0, hm("armZ", i)]),
+      );
       forearms.forEach((j, i) => {
-        j.obj.rotation.x = j.x - 0.12 + Math.sin(t * 0.9 + i * 0.7 + 0.6) * 0.2 + acc.forearmX[i];
+        if (!mocap) {
+          j.obj.rotation.x = j.x - 0.12 + Math.sin(t * 0.9 + i * 0.7 + 0.6) * 0.2 + acc.forearmX[i];
+          return;
+        }
+        // The clips were baked with straight forearms (the Mixamo T-pose);
+        // hand-made gestures were tuned on the authored bend.
+        const w = handmade?.weight ?? 0;
+        j.obj.rotation.x = (j.x + hm("forearmX", i)) * w + acc.forearmX[i];
       });
-      elbows.forEach((j, i) => {
-        j.obj.rotation.y = j.y + Math.sin(t * 0.7 + i) * 0.12;
-        j.obj.rotation.z = j.z + acc.elbowZ[i];
-      });
-      shoulders.forEach((j, i) => {
-        j.obj.rotation.z = j.z + Math.sin(t * 0.8 + i * 1.3) * 0.06;
-      });
+      elbows.forEach((j, i) =>
+        pose(j, 0, Math.sin(t * 0.7 + i) * 0.12 * sway, acc.elbowZ[i], [0, 0, hm("elbowZ", i)]),
+      );
+      shoulders.forEach((j, i) => pose(j, 0, 0, Math.sin(t * 0.8 + i * 1.3) * 0.06 * sway, [0, 0, 0]));
+      if (mocap) [...legs, ...shins, ...feet].forEach((j) => pose(j, 0, 0, 0));
 
       renderFace(face, dt, t);
 

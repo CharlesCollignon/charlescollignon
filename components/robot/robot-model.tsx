@@ -6,6 +6,7 @@ import { useGLTF } from "@react-three/drei";
 import * as THREE from "three";
 import { createRig, nodeName, type Rig } from "./rig";
 import { EYE_COLS, EYE_ROWS } from "./face";
+import { loadClips } from "./clips";
 
 export const ROBOT_URL = "/models/robot.glb";
 
@@ -255,11 +256,20 @@ export function RobotModel({ paused }: { paused: boolean }) {
     const emblem = top && body ? attempt(() => buildEmblem(top, body)) : undefined;
     const rig = createRig(scene, camera, { eyes: eyes?.grid, emblem: emblem?.material });
     rigRef.current = rig;
+    // Motion capture streams in after the robot appears; until then (or if it
+    // fails) the rig animates procedurally.
+    let cancelled = false;
+    loadClips(scene)
+      .then((set) => {
+        if (!cancelled) rig?.setClips(set);
+      })
+      .catch((error) => console.warn("Robot: motion clips unavailable", error));
     // Development-only handle for tuning poses from the console.
     if (process.env.NODE_ENV === "development") {
       (window as unknown as { __robot: unknown }).__robot = { scene, rig };
     }
     return () => {
+      cancelled = true;
       rig?.dispose();
       rigRef.current = null;
       eyes?.dispose();

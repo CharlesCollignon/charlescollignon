@@ -9,63 +9,16 @@
  * the animations it produces are retargeted onto the original, multi-part
  * robot at runtime, so materials, the LED face and the emblem are kept.
  */
-import { readFileSync, writeFileSync } from "node:fs";
+import { writeFileSync } from "node:fs";
 import * as THREE from "three";
-import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { OBJExporter } from "three/addons/exporters/OBJExporter.js";
 import { mergeGeometries, mergeVertices } from "three/addons/utils/BufferGeometryUtils.js";
+import { applyTPose, loadRobot } from "./lib/robot.mjs";
 
-const SRC = "assets/models/robot.source.glb";
 const OUT = "assets/models/robot-tpose.obj";
 
-const data = readFileSync(SRC);
-const gltf = await new Promise((resolve, reject) =>
-  new GLTFLoader().parse(
-    data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength),
-    "",
-    resolve,
-    reject,
-  ),
-);
-const scene = gltf.scene;
-const bot = scene.getObjectByName("Bot");
-if (!bot) throw new Error('No "Bot" node');
-// Work in Spline units around the robot alone.
-bot.removeFromParent();
-const root = new THREE.Group();
-root.add(bot);
-root.updateMatrixWorld(true);
-
-const named = (name) => {
-  const re = new RegExp(`^${THREE.PropertyBinding.sanitizeNodeName(name)}(_\\d+)?$`);
-  const out = [];
-  root.traverse((o) => re.test(o.name) && out.push(o));
-  return out;
-};
-
-/* T-pose: rotate each upper arm (about its local Z) until the shoulder→elbow
-   direction is horizontal and pointing outward, then straighten the elbow. */
-const world = (o) => o.getWorldPosition(new THREE.Vector3());
-for (const [i, arm] of named("arm").entries()) {
-  const elbow = named("elbow")[i];
-  const forearm = named("forearm")[i];
-  const restZ = arm.rotation.z;
-  let best = { angle: 0, score: Infinity };
-  for (let a = -3.2; a <= 3.2; a += 0.002) {
-    arm.rotation.z = restZ + a;
-    root.updateMatrixWorld(true);
-    const dir = world(elbow).sub(world(arm)).normalize();
-    const outward = Math.sign(world(arm).x - world(bot).x);
-    // Horizontal (y ≈ 0), pointing away from the body, little forward lean.
-    const score = Math.abs(dir.y) + Math.abs(dir.z) * 0.5 + (Math.sign(dir.x) === outward ? 0 : 10);
-    if (score < best.score) best = { angle: a, score };
-  }
-  arm.rotation.z = restZ + best.angle;
-  if (forearm) forearm.rotation.x = 0;
-  if (elbow) elbow.rotation.y = 0;
-  console.log(`arm ${i}: +${best.angle.toFixed(3)} rad about Z`);
-}
-root.updateMatrixWorld(true);
+const { root, bot } = await loadRobot();
+applyTPose(root, bot, console.log);
 
 /* Merge every part into one mesh (positions and normals only). */
 const parts = [];
