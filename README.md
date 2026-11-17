@@ -6,7 +6,7 @@ Live at [charlescollignon.com](https://www.charlescollignon.com) (English) and
 
 ## What's inside
 
-- **Home**: a 3D robot (three.js) that rises in, follows the cursor and moves with the scroll, a manifesto that lights up word by word, and full-screen project panels that stack as you scroll, each in its project's own colours.
+- **Home**: a 3D character (three.js, Mixamo motion capture) that rises in, waves, follows the cursor and moves with the scroll, a manifesto that lights up word by word, and full-screen project panels that stack as you scroll, each in its project's own colours.
 - **Case studies** (`/work/[slug]`): [Phronesis](https://www.phronesis-france.com), [Pluclair](https://pluclair.com) and QuantCube's Macro Intelligence Platform. The MIP visuals are redrawn diagrams because the platform is private; they contain no client data.
 - **Interactions**: smooth scrolling, magnetic buttons, a context-aware cursor, text reveals, tilting device frames, and a horizontal gallery pinned to the scroll. Motion respects "reduce motion", touch devices skip the pointer effects, and constrained devices get a still frame instead of WebGL.
 - **English and French**: English at `/` and French at `/fr`, with hreflang tags, a sitemap, JSON-LD and generated Open Graph images for every page.
@@ -17,22 +17,22 @@ Live at [charlescollignon.com](https://www.charlescollignon.com) (English) and
 - TypeScript and Tailwind CSS 4
 - `next-intl`
 - GSAP (ScrollTrigger, SplitText), Lenis and Motion
-- three.js with React Three Fiber, for the robot
+- three.js with React Three Fiber, for the character
 - Vercel Analytics and Speed Insights
 
-## The robot
+## The character
 
-The robot is a GLB exported from Spline. It is animated in code (`components/robot/`), with motion-capture clips from Mixamo blended in.
+The character is "[Humanoid Model](https://sketchfab.com/3d-models/humanoid-model-4f56bd97eaa7421a80e12d35ef78d22b)" by CowboyTruman (CC BY 4.0, credited in the footer), skinned to a Mixamo skeleton and animated with Mixamo motion capture. The rig (`components/character/rig.ts`) layers the clips and adds the scroll choreography, cursor tracking and reactions.
 
 | Step | Command | Result |
 | --- | --- | --- |
-| Optimise the model | `npm run robot:optimize` | `assets/models/robot.source.glb` → `public/models/robot.glb` |
-| Make the Mixamo upload | `npm run robot:mixamo` | a T-posed single-mesh OBJ, `assets/models/robot-tpose.obj` |
-| Bake the animations | `npm run robot:bake` | `assets/animations/*.fbx` (Mixamo, *FBX Binary, Without Skin, 30 fps*) → `public/models/robot-clips.json` |
+| Clean up the Sketchfab download | `npm run humanoid:optimize` | `assets/models/humanoid_model.zip` (unzipped to `humanoid-src/`) → `assets/models/humanoid-static.glb` |
+| Make the Mixamo upload | `npm run humanoid:mixamo` | `assets/models/humanoid-mixamo.obj` |
+| Build the site's model | `npm run humanoid:build` | `assets/models/humanoid-static.glb` + `assets/animations/*.fbx` → `public/models/humanoid.glb` |
 
-The bake retargets each Mixamo bone onto the matching robot part, so the robot keeps its materials, LED face and emblem.
+The build takes the skeleton from `assets/animations/running-jump.fbx` (made in Mixamo from the OBJ above), fits it to the mesh, computes the skin weights, and retargets every FBX in `assets/animations/` onto it. Clips made on any Mixamo character work.
 
-Other characters can be tried with `?model=<key>` (listed in `CHARACTERS`, `components/robot/robot-model.tsx`). `?model=humanoid` shows "Humanoid Model" by CowboyTruman (CC BY 4.0, credited on the page while it is shown), prepared with `npm run humanoid:optimize` from the Sketchfab download in `assets/models/`. To add an animation, drop the FBX in `assets/animations/`, run the bake, then reference the clip by its file name in `components/robot/rig.ts`.
+To add an animation: in Mixamo, download it as *FBX Binary, Without Skin, 30 fps*, with *In Place* checked if offered. Save it in `assets/animations/`, run `npm run humanoid:build`, then use it by its file name in `components/character/rig.ts`.
 
 ## Develop
 

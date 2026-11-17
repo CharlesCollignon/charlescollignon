@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
  * reduced motion; the native cursor stays visible for accessibility.
  */
 export function Cursor() {
-  const robotLabel = useTranslations("cursor")("robot");
+  const characterLabel = useTranslations("cursor")("character");
   const enabled = useMediaQuery(
     "(pointer: fine) and (prefers-reduced-motion: no-preference)",
   );
@@ -35,11 +35,11 @@ export function Cursor() {
 
       const target = e.target instanceof Element ? e.target : null;
       const labelled = target?.closest<HTMLElement>("[data-cursor]");
-      // The 3D robot sets this class while the pointer is over it.
-      const overRobot = document.documentElement.classList.contains("robot-hover");
-      setLabel(labelled?.dataset.cursor || (overRobot ? robotLabel : null));
+      // The 3D character sets this class while the pointer is over it.
+      const overCharacter = document.documentElement.classList.contains("character-hover");
+      setLabel(labelled?.dataset.cursor || (overCharacter ? characterLabel : null));
       setHovering(
-        Boolean(labelled || overRobot || target?.closest("a, button, [role='button']")),
+        Boolean(labelled || overCharacter || target?.closest("a, button, [role='button']")),
       );
     };
     const onLeave = () => setVisible(false);
@@ -50,7 +50,7 @@ export function Cursor() {
       window.removeEventListener("pointermove", onMove);
       document.documentElement.removeEventListener("pointerleave", onLeave);
     };
-  }, [enabled, x, y, robotLabel]);
+  }, [enabled, x, y, characterLabel]);
 
   if (!enabled) return null;
 

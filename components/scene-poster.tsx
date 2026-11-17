@@ -1,11 +1,11 @@
 /**
- * A still frame of the 3D scene, shown instead of the live 3D robot on
+ * A still frame of the 3D scene, shown instead of the live 3D character on
  * devices where it would cost too much (Data Saver, low memory or CPU) or
  * when the user prefers reduced motion. One frame per theme and orientation.
  */
 export function ScenePoster() {
   const frame = (device: "desktop" | "mobile", theme: "dark" | "light") =>
-    `/scene/robot-${device}-${theme}.webp`;
+    `/scene/character-${device}-${theme}.webp`;
 
   return (
     <div aria-hidden className="fixed inset-0 -z-10 bg-white dark:bg-black">

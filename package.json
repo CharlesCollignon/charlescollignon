@@ -7,11 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "robot:optimize": "node scripts/optimize-robot.mjs",
-    "robot:mixamo": "node scripts/export-mixamo.mjs",
-    "robot:bake": "node scripts/bake-animations.mjs",
     "humanoid:optimize": "node scripts/optimize-humanoid.mjs",
-    "humanoid:mixamo": "node scripts/export-humanoid-mixamo.mjs"
+    "humanoid:mixamo": "node scripts/export-humanoid-mixamo.mjs",
+    "humanoid:build": "node scripts/build-humanoid.mjs"
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",

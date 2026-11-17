@@ -43,10 +43,10 @@ next-env.d.ts
 # Windows download markers
 *:Zone.Identifier
 
-# Mixamo upload file (regenerate with node scripts/export-mixamo.mjs)
-assets/models/robot-tpose.obj
-
-# Sketchfab sources (large; regenerate public/models/humanoid.glb with npm run humanoid:optimize)
+# Sketchfab sources (large; npm run humanoid:optimize regenerates assets/models/humanoid-static.glb)
 assets/models/humanoid_model.zip
 assets/models/humanoid-src/
 assets/models/humanoid-mixamo.obj
+
+# Scratch scripts
+scripts/tmp/

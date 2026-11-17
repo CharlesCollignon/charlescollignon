@@ -3,7 +3,7 @@
  *
  *   unzip assets/models/humanoid_model.zip -d assets/models/humanoid-src
  *   node scripts/optimize-humanoid.mjs
- *   (→ public/models/humanoid.glb)
+ *   (→ assets/models/humanoid-static.glb; then npm run humanoid:build)
  *
  * The source is a 1M-triangle sculpt in 33 pieces with no rig. This bakes the
  * transforms, merges the pieces, simplifies to ~60k triangles, and scales it
@@ -22,7 +22,7 @@ import { MeshoptEncoder, MeshoptSimplifier } from "meshoptimizer";
 import { statSync } from "node:fs";
 
 const SRC = "assets/models/humanoid-src/scene.gltf";
-const OUT = "public/models/humanoid.glb";
+const OUT = "assets/models/humanoid-static.glb";
 const TARGET_TRIANGLES = 60000;
 const ROBOT = { height: 547, feetY: -243 };
 

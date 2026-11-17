@@ -42,7 +42,7 @@ export function Hero() {
       data-camera="hero"
       className="relative flex min-h-dvh flex-col justify-end pb-24 md:pb-20"
     >
-      {/* The robot takes the top-left corner (robot/rig.ts) and turns toward
+      {/* The character takes the top-left corner (character/rig.ts) and turns toward
           the text, which sits bottom right. */}
       <div data-hero-content className="page-x relative flex flex-col items-end text-right">
         <p

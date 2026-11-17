@@ -45,7 +45,7 @@ export function About() {
 
   return (
     <section id="about" className="relative w-full">
-      {/* The robot stands on the left (see robot/rig.ts); the text takes the right. */}
+      {/* The character stands on the left (see character/rig.ts); the text takes the right. */}
       <div data-camera="about" className="page-x flex min-h-dvh flex-col justify-center py-section">
         <div className="md:ml-auto md:w-[min(56%,52rem)]">
           <p className="eyebrow mb-8 text-zinc-500 md:mb-12 dark:text-zinc-400">
@@ -58,10 +58,10 @@ export function About() {
         </div>
       </div>
 
-      {/* The run: the rows are pinned mid-screen while the robot runs across
+      {/* The run: the rows are pinned mid-screen while the character runs across
           above them; the pin releases once it has left on the right.
-          Markers: "run" = pin start (robot just left About, off-screen left),
-          "runIn" = camera pulled back, "runEnd" = robot gone right. */}
+          Markers: "run" = pin start (character just left About, off-screen left),
+          "runIn" = camera pulled back, "runEnd" = character gone right. */}
       <div data-camera="run" className="relative h-[260dvh]">
         <div className="sticky top-0 flex h-dvh flex-col justify-center gap-3">
         <Marquee

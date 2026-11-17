@@ -71,7 +71,8 @@
   "footer": {
     "rights": "Tous droits réservés.",
     "built": "Construit avec Next.js, Three.js, GSAP et Motion",
-    "top": "Retour en haut"
+    "top": "Retour en haut",
+    "credit": "Personnage 3D adapté de « {title} » par {author}, CC BY 4.0"
   },
   "caseStudy": {
     "role": "Rôle",
@@ -274,6 +275,6 @@
     "home": "Retour à l'accueil"
   },
   "cursor": {
-    "robot": "Coucou"
+    "character": "Coucou"
   }
 }
