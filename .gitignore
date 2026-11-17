@@ -42,3 +42,6 @@ next-env.d.ts
 
 # Windows download markers
 *:Zone.Identifier
+
+# Mixamo upload file (regenerate with node scripts/export-mixamo.mjs)
+assets/models/robot-tpose.obj
