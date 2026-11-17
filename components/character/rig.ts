@@ -26,9 +26,8 @@ import {
  *     one-shot gestures on top. Each layer covers the ones below by its
  *     weight, so everything crossfades.
  *  3. On top of the clips: the head, then the chest, then the whole body turn
- *     toward the cursor; hand-posed gestures (a wave) aim the arm in body
- *     space, so they work over any clip.
- *  4. Reactions: a wave on arrival and on returning to the tab, a jump when
+ *     toward the cursor (less so during a gesture, so a bow stays a bow).
+ *  4. Reactions: a formal bow on arrival and on returning to the tab, a jump when
  *     clicked, a spin after three quick clicks, a curious head tilt now and
  *     then, arms thrown out by fast scrolling.
  *
@@ -49,7 +48,7 @@ type Pose = {
 /** Landscape screens. */
 const WIDE: Record<string, Pose> = {
   // Top-left corner, chest up, turned toward the text in the bottom-right corner.
-  hero: { cam: [0, 200, 700], x: -150, y: 0, ry: 0.55, rx: 0, look: 0.5 },
+  hero: { cam: [0, 165, 540], x: -125, y: 0, ry: 0.55, rx: 0, look: 0.5 },
   // Full height on the left, turned toward the text on the right.
   about: { cam: [0, 40, 1450], x: -320, y: 0, ry: 0.6, rx: 0, look: 1 },
   // Leaving About it runs off to the left at the same scale…
@@ -66,7 +65,7 @@ const WIDE: Record<string, Pose> = {
 
 /** Portrait screens: the text spans the width, so the character sits behind it. */
 const TALL: Record<string, Pose> = {
-  hero: { cam: [0, 150, 950], x: -55, y: 0, ry: 0.5, rx: 0, look: 0.5 },
+  hero: { cam: [0, 140, 780], x: -45, y: 0, ry: 0.5, rx: 0, look: 0.5 },
   about: { cam: [0, 60, 2200], x: -170, y: 0, ry: 0.6, rx: 0, look: 1 },
   run: { cam: [0, 60, 2200], x: -720, y: 0, ry: 0.6, rx: 0, look: 0 },
   runIn: { cam: [0, -368, 3500], x: -700, y: 0, ry: 0.6, rx: 0, look: 0 },
@@ -104,7 +103,7 @@ type Offsets = {
 /** An arm aimed in body space: upper arm and forearm directions. */
 type ArmAim = { upper: [number, number, number]; fore: [number, number, number] };
 
-export type ActionName = "wave" | "curious" | "spin" | "jump" | "handshake" | "look";
+export type ActionName = "bow" | "curious" | "spin" | "jump" | "handshake" | "look";
 type Action = {
   duration: number;
   fade?: [number, number];
@@ -113,20 +112,11 @@ type Action = {
   /** Motion-capture clip to play (its length wins). */
   clip?: string;
   pose?: (p: number, t: number) => Offsets;
-  /** Hand-posed arms, by side as the viewer sees them. */
-  arms?: (p: number, t: number) => { left?: ArmAim; right?: ArmAim };
 };
 
 const ACTIONS: Record<ActionName, Action> = {
-  // The arm on the viewer's right goes up and out, the hand swings.
-  wave: {
-    duration: 2.6,
-    fade: [0.16, 0.2],
-    pose: () => ({ headRz: -0.08 }),
-    arms: (_p, t) => ({
-      right: { upper: [0.85, 0.45, 0.2], fore: [0.12 + Math.sin(t * 10) * 0.45, 1, 0.25] },
-    }),
-  },
+  // A formal bow, hand to chest.
+  bow: { duration: 2.7, clip: "quick-formal-bow", fade: [0.14, 0.2] },
   // Head tilt.
   curious: { duration: 2, pose: () => ({ headRz: 0.3, headRx: -0.05 }) },
   // A full turn on the spot.
@@ -294,7 +284,7 @@ export function createRig(model: Object3D, camera: Camera, clips: AnimationClip[
   let hiddenAt = 0;
   const onVisibility = () => {
     if (document.visibilityState === "hidden") hiddenAt = performance.now();
-    else if (hiddenAt && performance.now() - hiddenAt > 3000) play("wave", true);
+    else if (hiddenAt && performance.now() - hiddenAt > 3000) play("bow", true);
   };
 
   /* ---------------------------------------------------------- actions */
@@ -402,7 +392,7 @@ export function createRig(model: Object3D, camera: Camera, clips: AnimationClip[
       const scroll = window.scrollY;
       const velocity = (scroll - lastScroll) / Math.max(dt, 1e-3);
       lastScroll = scroll;
-      lean = damp(lean, clamp(velocity * 0.00006, -0.14, 0.14), 6, dt);
+      lean = damp(lean, clamp(velocity * 0.00006, -0.14, 0.14), 4, dt);
       if (Math.abs(velocity) > 30) runDir = Math.sign(velocity);
       const fast = Math.abs(velocity) > 1800;
       jolt = damp(jolt, clamp((Math.abs(velocity) - 1800) / 2500, 0, 1), fast ? 10 : 2.5, dt);
@@ -411,19 +401,19 @@ export function createRig(model: Object3D, camera: Camera, clips: AnimationClip[
       const idle = performance.now() - pointer.movedAt > 3000;
       const tx = idle ? Math.sin(t * 0.35) * 0.5 : pointer.x;
       const ty = idle ? Math.sin(t * 0.23) * 0.25 : pointer.y;
-      pointer.hx = damp(pointer.hx, tx, idle ? 1.5 : 7, dt);
-      pointer.hy = damp(pointer.hy, ty, idle ? 1.5 : 7, dt);
-      pointer.sx = damp(pointer.sx, tx, idle ? 1 : 3, dt);
-      pointer.sy = damp(pointer.sy, ty, idle ? 1 : 3, dt);
+      pointer.hx = damp(pointer.hx, tx, idle ? 1.2 : 4.5, dt);
+      pointer.hy = damp(pointer.hy, ty, idle ? 1.2 : 4.5, dt);
+      pointer.sx = damp(pointer.sx, tx, idle ? 0.8 : 2, dt);
+      pointer.sy = damp(pointer.sy, ty, idle ? 0.8 : 2, dt);
 
       // Scroll pose and the section we're in.
       const target = scrollPose();
-      for (const k of KEYS) state[k] = damp(state[k], target[k], k === "y" ? 2.4 : 3.2, dt);
+      for (const k of KEYS) state[k] = damp(state[k], target[k], k === "y" ? 2.2 : 2.6, dt);
 
       // Say hello once it has risen into frame.
       if (!introDone && Math.abs(state.y - target.y) < 40) {
         introDone = true;
-        play("wave", true);
+        play("bow", true);
       }
       if (target.section !== section) {
         section = target.section;
@@ -440,10 +430,10 @@ export function createRig(model: Object3D, camera: Camera, clips: AnimationClip[
         const midStride = local > 0.04 && local < runLength - 0.04;
         if (moving) runPhase += (Math.abs(velocity) * dt) / RUN_PX_PER_SECOND;
         else if (midStride) runPhase += dt;
-        runActivity = damp(runActivity, moving || midStride ? 1 : 0, 6, dt);
+        runActivity = damp(runActivity, moving || midStride ? 1 : 0, 4, dt);
         runWeight = target.runZone * runActivity;
       } else {
-        runActivity = damp(runActivity, 0, 6, dt);
+        runActivity = damp(runActivity, 0, 4, dt);
       }
 
       // Actions: retire finished ones, then start the next queued one.
@@ -468,7 +458,7 @@ export function createRig(model: Object3D, camera: Camera, clips: AnimationClip[
       // covers what's below by its weight; the idle gets what's left.
       const layers: { clip: string; time: number; weight: number }[] = [];
       for (const key of Object.keys(moodWeight)) {
-        moodWeight[key] = damp(moodWeight[key], key === section ? 1 : 0, 2.5, dt);
+        moodWeight[key] = damp(moodWeight[key], key === section ? 1 : 0, 1.6, dt);
         const clip = MOODS[key].clip;
         if (clip && actions.has(clip) && moodWeight[key] > 0.001) {
           layers.push({ clip, time: (t - (moodStart[key] ?? 0)) % duration(clip), weight: moodWeight[key] });
@@ -480,16 +470,17 @@ export function createRig(model: Object3D, camera: Camera, clips: AnimationClip[
       for (const key of Object.keys(moodWeight)) {
         if (moodWeight[key] > 0.001) add(acc, MOODS[key].pose, moodWeight[key]);
       }
-      const arms: { side: "left" | "right"; aim: ArmAim; weight: number }[] = [];
+      // How much a gesture clip has the body: the cursor tracking eases off.
+      let gesture = 0;
       for (const a of running) {
         const def = ACTIONS[a.name];
         const p = clamp((t - a.start) / durationOf(a.name), 0, 1);
-        const w = def.raw ? 1 : envelope(p, def.fade?.[0] ?? 0.18, def.fade?.[1] ?? 0.22);
-        if (def.clip && actions.has(def.clip)) layers.push({ clip: def.clip, time: t - a.start, weight: w });
+        const w = def.raw ? 1 : envelope(p, def.fade?.[0] ?? 0.25, def.fade?.[1] ?? 0.3);
+        if (def.clip && actions.has(def.clip)) {
+          layers.push({ clip: def.clip, time: t - a.start, weight: w });
+          gesture = Math.max(gesture, w);
+        }
         if (def.pose) add(acc, def.pose(p, t), w);
-        const posed = def.arms?.(p, t);
-        if (posed?.left) arms.push({ side: "left", aim: posed.left, weight: w });
-        if (posed?.right) arms.push({ side: "right", aim: posed.right, weight: w });
       }
 
       // Top layer first: each takes its share of what's left.
@@ -528,8 +519,9 @@ export function createRig(model: Object3D, camera: Camera, clips: AnimationClip[
       );
       bot.updateMatrixWorld(true);
 
-      // Look toward the pointer: chest a little, then neck and head.
-      const look = state.look;
+      // Look toward the pointer: chest a little, then neck and head (mostly
+      // not during a gesture).
+      const look = state.look * (1 - gesture * 0.85);
       const pitch = pointer.hy * 0.32 * look + acc.headRx - jolt * 0.1;
       const yaw = pointer.hx * 0.5 * look + acc.headRy;
       const roll = -pointer.hx * 0.06 * look + acc.headRz;
@@ -537,8 +529,6 @@ export function createRig(model: Object3D, camera: Camera, clips: AnimationClip[
       turnHead(neck, pitch * 0.4, yaw * 0.4, roll * 0.4);
       turnHead(head, pitch * 0.6, yaw * 0.6, roll * 0.6);
 
-      // Hand-posed arms over the clip pose.
-      for (const a of arms) aimArm(a.side === "left" ? viewerLeft : viewerRight, a.aim, a.weight);
       // Fast scrolling throws the arms out (not mid-run).
       if (jolt > 0.05 && target.runZone === 0) {
         const out = jolt * 0.6;

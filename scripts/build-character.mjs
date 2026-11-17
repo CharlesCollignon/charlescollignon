@@ -1,367 +1,103 @@
 /**
- * Builds the site's character: the Sketchfab model, skinned to a Mixamo
- * skeleton, with its own material and every animation, in one compressed GLB.
+ * Builds the site's character: the Sketchfab model as rigged by Mixamo, in
+ * dark chrome, with every animation, in one compressed GLB.
  *
  *   npm run character:build
- *   (assets/models/character.source.glb + assets/animations/*.fbx
+ *   (assets/animations/*.fbx + assets/models/character.source.glb
  *    -> public/models/character.glb)
  *
- * 1. Skeleton: from RIG, an animation downloaded from Mixamo for this mesh
- *    (npm run character:mixamo makes the upload). Its rest pose is a T-pose;
- *    the model stands in an A-pose, so each arm bone is first swung onto the
- *    mesh's arm (the direction that runs through the most vertices).
- * 2. Joints: elbows, wrists, knees and ankles are centred in their limb
- *    (Mixamo's markers can leave them on the surface).
- * 3. Skin weights: each vertex goes to the nearest bone it can "see" through
- *    the inside of the body (so ribs beside a hanging arm stay with the
- *    spine), stray patches join the bone around them, then the weights are
- *    diffused across the surface so joints bend smoothly.
- * 4. Animations: every FBX in assets/animations is retargeted onto the
+ * 1. Mesh and skin: from SKIN, an animation downloaded from Mixamo for this
+ *    character *With Skin* (Mixamo's skeleton and skin weights).
+ * 2. T-pose: from TPOSE, a download *Without Skin*, whose rest pose is
+ *    Mixamo's T-pose. Clips are retargeted from it.
+ * 3. Animations: every FBX in assets/animations is retargeted onto the
  *    skeleton (world-space rotation deltas from the T-pose, so clips made on
  *    other Mixamo characters work too). Played in place: the hips keep their
  *    vertical motion only. Clips are named after their files.
- * 5. The source's material and textures are carried over; textures become
- *    1024 px WebP.
+ * 4. Material: dark chrome under a clear coat, keeping the source's normal map
+ *    (its sculpted detail) at full resolution.
  */
 import { readdirSync, statSync, writeFileSync } from "node:fs";
 import * as THREE from "three";
 import { GLTFExporter } from "three/addons/exporters/GLTFExporter.js";
+import { mergeVertices } from "three/addons/utils/BufferGeometryUtils.js";
 import { NodeIO } from "@gltf-transform/core";
-import { ALL_EXTENSIONS } from "@gltf-transform/extensions";
+import { ALL_EXTENSIONS, KHRMaterialsClearcoat } from "@gltf-transform/extensions";
 import { copyToDocument, meshopt, prune, quantize, resample, textureCompress } from "@gltf-transform/functions";
 import { MeshoptEncoder } from "meshoptimizer";
-import { MeshBVH } from "three-mesh-bvh";
 import sharp from "sharp";
-import { SOURCE, boneKey, loadCharacterGeometry, loadFBX } from "./lib/character.mjs";
+import { SOURCE, boneKey, loadFBX } from "./lib/character.mjs";
 
-const RIG = "assets/animations/breathing-idle.fbx";
+const SKIN = "assets/animations/quick-formal-bow.fbx";
+const TPOSE = "assets/animations/breathing-idle.fbx";
 const ANIMATIONS = "assets/animations";
 const OUT = "public/models/character.glb";
 const FPS = 30;
 /** The site's scene units: feet at this height inside the "Bot" node. */
 const FEET_Y = -243;
 
-/* ---------------------------------------------------------------- skeleton */
-
-const rig = loadFBX(RIG);
-const bones = new Map();
-rig.traverse((o) => o.isBone && bones.set(boneKey(o.name), o));
-const hips = bones.get("Hips");
-const bone = (name) => {
-  const b = bones.get(name);
-  if (!b) throw new Error(`Missing bone ${name} in ${RIG}`);
-  return b;
+/** Dark chrome: a near-black mirror under a thin lacquer. */
+const CHROME = {
+  color: [0.16, 0.17, 0.19, 1], // linear
+  metallic: 1,
+  roughness: 0.2,
+  clearcoat: 0.7,
+  clearcoatRoughness: 0.06,
 };
+
 const world = (o) => o.getWorldPosition(new THREE.Vector3());
 const worldQ = (o) => o.getWorldQuaternion(new THREE.Quaternion());
+const bonesOf = (root) => {
+  const m = new Map();
+  root.traverse((o) => o.isBone && m.set(boneKey(o.name), o));
+  return m;
+};
+const hasSkin = (root) => {
+  let found = false;
+  root.traverse((o) => (found ||= Boolean(o.isSkinnedMesh)));
+  return found;
+};
 
-// The T-pose, recorded for retargeting before the arms are moved.
-rig.updateMatrixWorld(true);
+/* ---------------------------------------------------------------- skin */
+
+const skin = loadFBX(SKIN);
+let mesh;
+skin.traverse((o) => {
+  if (o.isSkinnedMesh) mesh = o;
+});
+if (!mesh) throw new Error(`${SKIN} has no mesh: download it from Mixamo "With Skin"`);
+const bones = bonesOf(skin);
+const hips = bones.get("Hips");
+const bindLocalQ = new Map([...bones].map(([n, b]) => [n, b.quaternion.clone()]));
+
+// Mixamo's mesh is a triangle soup: weld it, and add tangents for the normal map.
+const soup = mesh.geometry;
+for (const name of Object.keys(soup.attributes)) {
+  if (!["position", "normal", "uv", "skinIndex", "skinWeight"].includes(name)) soup.deleteAttribute(name);
+}
+mesh.geometry = mergeVertices(soup, 1e-4);
+mesh.geometry.computeTangents();
+mesh.name = "Character";
+
+/* ---------------------------------------------------------------- T-pose */
+
+// Mixamo skeletons share their bones' local frames: the T-pose skeleton's
+// rotations put this one in the T-pose too.
+const tposeBones = bonesOf(loadFBX(TPOSE));
+const toTPose = (boneMap) => {
+  for (const [n, b] of boneMap) {
+    const t = tposeBones.get(n);
+    if (t) b.quaternion.copy(t.quaternion);
+  }
+};
+toTPose(bones);
+skin.updateMatrixWorld(true);
 const tposeWorldQ = new Map([...bones].map(([n, b]) => [n, worldQ(b)]));
 const tposeLocalQ = new Map([...bones].map(([n, b]) => [n, b.quaternion.clone()]));
 const tposeHipsY = world(hips).y;
-
-/* ---------------------------------------------------------------- mesh */
-
-const geometry = await loadCharacterGeometry();
-const P = geometry.attributes.position;
-const V = P.count;
-const points = Array.from({ length: V }, (_, i) => new THREE.Vector3().fromBufferAttribute(P, i));
-
-/** Turn `b` (in world space) so its child sits along `dir`. */
-function aim(b, child, dir) {
-  rig.updateMatrixWorld(true);
-  const from = world(child).sub(world(b)).normalize();
-  const turn = new THREE.Quaternion().setFromUnitVectors(from, dir.clone().normalize());
-  b.quaternion.copy(worldQ(b.parent).invert().multiply(turn.multiply(worldQ(b))));
-  rig.updateMatrixWorld(true);
-}
-
-const segDist = (p, a, b) => {
-  const ab = b.clone().sub(a);
-  const t = THREE.MathUtils.clamp(p.clone().sub(a).dot(ab) / ab.lengthSq(), 0, 1);
-  return p.distanceTo(a.clone().addScaledVector(ab, t));
-};
-
-/**
- * The direction from `from` (length `len`) that passes through the most mesh
- * vertices: a limb's axis. Searched over a cone around `guess`.
- */
-/**
- * The arm's vertices on one side: in each horizontal slice, whatever lies
- * beyond the outermost gap (in an A-pose the arm hangs clear of the body
- * below the armpit; above it nothing is taken).
- */
-function armPoints(side) {
-  const slices = new Map();
-  for (const p of points) {
-    if (p.x * side <= 0) continue;
-    const k = Math.round(p.y / 3);
-    if (!slices.has(k)) slices.set(k, []);
-    slices.get(k).push(p);
-  }
-  const out = [];
-  for (const slice of slices.values()) {
-    slice.sort((a, b) => a.x * side - b.x * side);
-    let cut = -1;
-    for (let i = 1; i < slice.length; i++) if ((slice[i].x - slice[i - 1].x) * side > 4) cut = i;
-    if (cut > 0) out.push(...slice.slice(cut));
-  }
-  return out;
-}
-const arms = { 1: armPoints(1), [-1]: armPoints(-1) };
-
-function limbDirection(from, len, guess, side) {
-  const near = arms[side].filter((p) => p.distanceTo(from) < len * 1.2);
-  let best = { score: -1, dir: guess };
-  const g = guess.clone().normalize();
-  for (let pitch = -1.4; pitch <= 1.4; pitch += 0.035) {
-    for (let yaw = -0.6; yaw <= 0.6; yaw += 0.05) {
-      const dir = g.clone().applyEuler(new THREE.Euler(yaw, 0, pitch * side, "YXZ"));
-      // Score the far part only (the shoulder's bulk would pull every arm
-      // inward), favouring vertices near the axis.
-      let score = 0;
-      for (const p of near) {
-        const rel = p.clone().sub(from);
-        const t = rel.dot(dir) / len;
-        if (t < 0.35 || t > 1.05) continue;
-        const d = rel.addScaledVector(dir, -t * len).length();
-        if (d < 14) score += 1 - d / 14;
-      }
-      if (score > best.score) best = { score, dir };
-    }
-  }
-  return best;
-}
-
-// Arms: shoulder → elbow → wrist → fingertips, each swung onto the mesh.
-const deg = (v) => THREE.MathUtils.radToDeg(v).toFixed(0);
-for (const [side, s] of [["Left", 1], ["Right", -1]]) {
-  const chain = [`${side}Arm`, `${side}ForeArm`, `${side}Hand`, `${side}HandIndex4`].map(bone);
-  for (let i = 0; i < 3; i++) {
-    const [b, child] = [chain[i], chain[i + 1]];
-    const len = world(child).distanceTo(world(b));
-    const current = world(child).sub(world(b));
-    const { dir, score } = limbDirection(world(b), len, current, s);
-    aim(b, child, dir);
-    console.log(`${b.name}: ${deg(Math.acos(-dir.y))}° from vertical (score ${score.toFixed(0)})`);
-  }
-}
-rig.updateMatrixWorld(true);
-
-/**
- * Centre the limb joints in their limb. Mixamo's markers put some joints on
- * the surface (the knee and ankle against the back of the leg); a bone
- * outside the body skins badly. Each joint moves to the middle of the limb's
- * cross-section around it; its children keep their places.
- */
-function centreJoint(name, parentName, limbPoints) {
-  const j = world(bone(name));
-  const d = j.clone().sub(world(bone(parentName))).normalize();
-  const ring = limbPoints.filter((p) => {
-    const rel = p.clone().sub(j);
-    const along = rel.dot(d);
-    return Math.abs(along) < 3 && rel.addScaledVector(d, -along).length() < 35;
-  });
-  if (ring.length < 8) return null;
-  const c = ring.reduce((a, p) => a.add(p), new THREE.Vector3()).divideScalar(ring.length);
-  // Stay in the cross-section's plane: only the sideways offset moves.
-  const off = c.sub(j);
-  return j.clone().add(off.addScaledVector(d, -off.dot(d)));
-}
-const legPoints = (side) => points.filter((p) => p.x * side > 3 && p.y < world(hips).y);
-const centred = new Map();
-for (const [side, s] of [["Left", 1], ["Right", -1]]) {
-  for (const [joint, parent, pts] of [
-    [`${side}ForeArm`, `${side}Arm`, arms[s]],
-    [`${side}Hand`, `${side}ForeArm`, arms[s]],
-    [`${side}Leg`, `${side}UpLeg`, legPoints(s)],
-    [`${side}Foot`, `${side}Leg`, legPoints(s)],
-  ]) {
-    const to = centreJoint(joint, parent, pts);
-    if (to) centred.set(bone(joint), to);
-  }
-}
-// Apply parents first, keeping every other joint where it was.
-const keep = new Map([...bones.values()].map((b) => [b, world(b)]));
-for (const [b, to] of centred) {
-  console.log(`centred ${b.name.replace("mixamorig", "")}: moved ${to.distanceTo(keep.get(b)).toFixed(1)}`);
-  keep.set(b, to);
-}
-for (const b of bones.values()) {
-  if (b === hips) continue;
-  b.parent.updateMatrixWorld(true);
-  b.position.copy(b.parent.worldToLocal(keep.get(b).clone()));
-  b.updateMatrixWorld(true);
-}
-
-/* ---------------------------------------------------------------- weights */
-
-// Each weighted bone covers the segment to its child.
-const SEGMENTS = [
-  ["Hips", "Spine"], ["Spine", "Spine1"], ["Spine1", "Spine2"], ["Spine2", "Neck"],
-  ["Neck", "Head"], ["Head", "HeadTop_End"],
-  ...["Left", "Right"].flatMap((s) => [
-    [`${s}Shoulder`, `${s}Arm`], [`${s}Arm`, `${s}ForeArm`], [`${s}ForeArm`, `${s}Hand`],
-    // The fingers are sculpted together: the whole hand follows the hand bone.
-    [`${s}Hand`, `${s}HandIndex4`],
-    [`${s}UpLeg`, `${s}Leg`], [`${s}Leg`, `${s}Foot`], [`${s}Foot`, `${s}ToeBase`], [`${s}ToeBase`, `${s}Toe_End`],
-  ]),
-].filter(([a, b]) => bones.has(a) && bones.has(b));
-const skinBones = [...bones.values()]; // skeleton order
-const segs = SEGMENTS.map(([a, b]) => ({ index: skinBones.indexOf(bone(a)), a: world(bone(a)), b: world(bone(b)) }));
-const B = segs.length;
-
-// Work on welded corners: UV seams split vertices that are one point on the body.
-const key = (p) => `${Math.round(p.x * 1e3)},${Math.round(p.y * 1e3)},${Math.round(p.z * 1e3)}`;
-const ids = new Map();
-const weld = new Int32Array(V); // vertex -> corner
-const corners = [];
-for (let i = 0; i < V; i++) {
-  const k = key(points[i]);
-  if (!ids.has(k)) {
-    ids.set(k, corners.length);
-    corners.push(points[i]);
-  }
-  weld[i] = ids.get(k);
-}
-const C = corners.length;
-const index = geometry.index.array;
-const adj = Array.from({ length: C }, () => new Set());
-for (let f = 0; f < index.length; f += 3) {
-  const [a, b, c] = [weld[index[f]], weld[index[f + 1]], weld[index[f + 2]]];
-  adj[a].add(b).add(c);
-  adj[b].add(a).add(c);
-  adj[c].add(a).add(b);
-}
-const neighbours = adj.map((s) => [...s]);
-let edge = 0;
-let edges = 0;
-for (let i = 0; i < C; i++) {
-  for (const j of neighbours[i]) {
-    edge += corners[i].distanceTo(corners[j]);
-    edges++;
-  }
-}
-edge /= edges;
-
-// 1. The nearest bone the vertex can "see" through the inside of the body
-//    (as auto-riggers do): a rib next to the hanging arm is closer to the arm
-//    bone, but the line to it leaves the body, so the rib stays with the spine.
-const welded = new THREE.BufferGeometry();
-welded.setAttribute("position", new THREE.Float32BufferAttribute(corners.flatMap((p) => p.toArray()), 3));
-welded.setIndex(Array.from(index, (v) => weld[v]));
-welded.computeVertexNormals();
-const bvh = new MeshBVH(welded);
-const cornerNormal = (i) => new THREE.Vector3().fromBufferAttribute(welded.attributes.normal, i);
-const closest = (p, s) => {
-  const ab = s.b.clone().sub(s.a);
-  const t = THREE.MathUtils.clamp(p.clone().sub(s.a).dot(ab) / ab.lengthSq(), 0, 1);
-  return s.a.clone().addScaledVector(ab, t);
-};
-const ray = new THREE.Ray();
-const visible = (p, n, s) => {
-  const from = p.clone().addScaledVector(n, -0.3); // just inside the surface
-  const to = closest(from, s);
-  const d = to.distanceTo(from);
-  if (d < 0.5) return true;
-  ray.set(from, to.clone().sub(from).normalize());
-  const hit = bvh.raycastFirst(ray, THREE.DoubleSide);
-  return !hit || hit.distance > d - 0.5;
-};
-
-const label = new Int32Array(C);
-let hidden = 0;
-for (let i = 0; i < C; i++) {
-  const p = corners[i];
-  const order = segs.map((s, k) => [k, segDist(p, s.a, s.b)]).sort((x, y) => x[1] - y[1]);
-  const n = cornerNormal(i);
-  const seen = order.filter(([k], j) => j < 6 && visible(p, n, segs[k]));
-  // Visible bones first, nearest first; the rest after, as fallbacks.
-  const rank = [...seen, ...order.filter((o) => !seen.includes(o))].map(([k]) => k);
-  if (seen.length && seen[0] !== order[0]) hidden++;
-  label[i] = rank[0];
-}
-console.log(`visibility: ${hidden} corners moved off a bone they can't see`);
-
-// 2. Each bone keeps only its largest connected patch; any other patch joins
-//    the bone that surrounds it (a bit of thigh tagged as hand becomes thigh).
-for (let pass = 0; pass < 30; pass++) {
-  let moved = 0;
-  const seen = new Uint8Array(C);
-  const patches = Array.from({ length: B }, () => []);
-  for (let i = 0; i < C; i++) {
-    if (seen[i]) continue;
-    const patch = [];
-    const stack = [i];
-    seen[i] = 1;
-    while (stack.length) {
-      const v = stack.pop();
-      patch.push(v);
-      for (const n of neighbours[v]) {
-        if (!seen[n] && label[n] === label[i]) {
-          seen[n] = 1;
-          stack.push(n);
-        }
-      }
-    }
-    patches[label[i]].push(patch);
-  }
-  for (const list of patches) {
-    list.sort((a, b) => b.length - a.length);
-    for (const patch of list.slice(1)) {
-      const own = label[patch[0]];
-      const votes = new Map();
-      for (const v of patch) {
-        for (const n of neighbours[v]) {
-          if (label[n] !== own) votes.set(label[n], (votes.get(label[n]) ?? 0) + 1);
-        }
-      }
-      const winner = [...votes].sort((a, b) => b[1] - a[1])[0]?.[0];
-      if (winner === undefined) continue;
-      for (const v of patch) label[v] = winner;
-      moved += patch.length;
-    }
-  }
-  if (!moved) break;
-  console.log(`pass ${pass}: ${moved} stray corners merged into their surroundings`);
-}
-
-// 3. Diffuse across the surface so each joint blends over ~BLEND units.
-const BLEND = 22;
-const iterations = Math.max(4, Math.round((BLEND / edge) ** 2));
-let w = new Float32Array(C * B);
-for (let i = 0; i < C; i++) w[i * B + label[i]] = 1;
-for (let it = 0; it < iterations; it++) {
-  const next = new Float32Array(C * B);
-  for (let i = 0; i < C; i++) {
-    const n = neighbours[i];
-    for (let k = 0; k < B; k++) {
-      let sum = 0;
-      for (const j of n) sum += w[j * B + k];
-      next[i * B + k] = n.length ? 0.5 * w[i * B + k] + (0.5 * sum) / n.length : w[i * B + k];
-    }
-  }
-  w = next;
-}
-console.log(`weights: ${C} corners (${V} vertices), mean edge ${edge.toFixed(2)}, ${iterations} diffusion steps`);
-
-// Top four influences per vertex.
-const skinIndex = new Uint16Array(V * 4);
-const skinWeight = new Float32Array(V * 4);
-for (let i = 0; i < V; i++) {
-  const c = weld[i];
-  const top = Array.from({ length: B }, (_, k) => [k, w[c * B + k]])
-    .sort((x, y) => y[1] - x[1])
-    .slice(0, 4);
-  const total = top.reduce((s, [, v]) => s + v, 0);
-  top.forEach(([k, v], j) => {
-    skinIndex[i * 4 + j] = segs[k].index;
-    skinWeight[i * 4 + j] = v / total;
-  });
-}
-geometry.setAttribute("skinIndex", new THREE.Uint16BufferAttribute(skinIndex, 4));
-geometry.setAttribute("skinWeight", new THREE.Float32BufferAttribute(skinWeight, 4));
+// Back to the bind pose (the mesh's own).
+for (const [n, b] of bones) b.quaternion.copy(bindLocalQ.get(n));
+skin.updateMatrixWorld(true);
 
 /* ---------------------------------------------------------------- animations */
 
@@ -369,8 +105,12 @@ geometry.setAttribute("skinWeight", new THREE.Float32BufferAttribute(skinWeight,
 function retarget(file) {
   const src = loadFBX(file);
   const clip = src.animations[0];
-  const srcBones = new Map();
-  src.traverse((o) => o.isBone && srcBones.set(boneKey(o.name), o));
+  const srcBones = bonesOf(src);
+  // A download with skin rests in the character's own pose, not the T-pose.
+  if (hasSkin(src)) {
+    toTPose(srcBones);
+    src.updateMatrixWorld(true);
+  }
   const srcRest = new Map([...srcBones].map(([n, b]) => [n, worldQ(b)]));
   const srcHipsY = world(srcBones.get("Hips")).y;
   const hipsScale = tposeHipsY / srcHipsY;
@@ -419,7 +159,7 @@ function retarget(file) {
   const name = file.split("/").pop().replace(/\.fbx$/i, "");
   const tracks = [
     new THREE.VectorKeyframeTrack(`${hips.name}.position`, times, hipsPos),
-    ...order.map((n) => new THREE.QuaternionKeyframeTrack(`${bone(n).name}.quaternion`, times, quats.get(n))),
+    ...order.map((n) => new THREE.QuaternionKeyframeTrack(`${bones.get(n).name}.quaternion`, times, quats.get(n))),
   ];
   console.log(`${name}: ${clip.duration.toFixed(2)}s, ${frames} frames (${srcBones.size} source bones)`);
   return new THREE.AnimationClip(name, clip.duration, tracks);
@@ -430,21 +170,16 @@ const clips = files.map((f) => retarget(`${ANIMATIONS}/${f}`));
 
 /* ---------------------------------------------------------------- assemble */
 
-// Bind in the mesh's own pose (arms lowered).
-rig.updateMatrixWorld(true);
-const MATERIAL = "Character";
-const mesh = new THREE.SkinnedMesh(geometry, new THREE.MeshStandardMaterial({ name: MATERIAL }));
-mesh.name = "Character";
-const character = new THREE.Group();
-character.name = "Rig";
-character.position.y = FEET_Y;
-hips.removeFromParent();
-character.add(hips, mesh);
-character.updateMatrixWorld(true);
-mesh.bind(new THREE.Skeleton(skinBones), mesh.matrixWorld);
+// Bot (moved by the site) > Rig (feet at FEET_Y) > Mixamo's hips and mesh.
+// The mesh keeps Mixamo's bind matrices: they're relative to the rig, which
+// moves as a whole.
+const rig = new THREE.Group();
+rig.name = "Rig";
+rig.position.y = FEET_Y;
+rig.add(...skin.children);
 const bot = new THREE.Group();
 bot.name = "Bot";
-bot.add(character);
+bot.add(rig);
 const scene = new THREE.Scene();
 scene.add(bot);
 
@@ -457,6 +192,7 @@ globalThis.FileReader ??= class {
     });
   }
 };
+mesh.material = new THREE.MeshStandardMaterial({ name: "Chrome" });
 const glb = await new GLTFExporter().parseAsync(scene, { binary: true, animations: clips });
 
 const io = new NodeIO()
@@ -465,19 +201,32 @@ const io = new NodeIO()
 await MeshoptEncoder.ready;
 const doc = await io.readBinary(new Uint8Array(glb));
 
-// The source's own material (base colour, metal/roughness and normal maps).
+// Dark chrome, with the source's normal map for the sculpted detail.
 const source = await io.read(SOURCE);
 const sourceMaterial = source.getRoot().listMaterials()[0];
 const material = copyToDocument(doc, source, [sourceMaterial]).get(sourceMaterial);
-material.setName(MATERIAL);
+material
+  .setName("Chrome")
+  .setBaseColorTexture(null)
+  .setMetallicRoughnessTexture(null)
+  .setBaseColorFactor(CHROME.color)
+  .setMetallicFactor(CHROME.metallic)
+  .setRoughnessFactor(CHROME.roughness);
+for (const ext of material.listExtensions()) material.setExtension(ext.extensionName, null);
+const clearcoat = doc.createExtension(KHRMaterialsClearcoat);
+material.setExtension(
+  "KHR_materials_clearcoat",
+  clearcoat.createClearcoat().setClearcoatFactor(CHROME.clearcoat).setClearcoatRoughnessFactor(CHROME.clearcoatRoughness),
+);
 for (const m of doc.getRoot().listMeshes()) for (const p of m.listPrimitives()) p.setMaterial(material);
 
 await doc.transform(
   resample(),
   prune(),
-  textureCompress({ encoder: sharp, targetFormat: "webp", resize: [1024, 1024], quality: 82 }),
+  textureCompress({ encoder: sharp, targetFormat: "webp", quality: 92 }),
   quantize(),
   meshopt({ encoder: MeshoptEncoder, level: "high" }),
 );
 writeFileSync(OUT, await io.writeBinary(doc));
-console.log(`${OUT}: ${V} vertices, ${clips.length} clips, ${(statSync(OUT).size / 1024).toFixed(0)} KB`);
+const v = mesh.geometry.attributes.position.count;
+console.log(`${OUT}: ${v} vertices, ${clips.length} clips, ${(statSync(OUT).size / 1024).toFixed(0)} KB`);

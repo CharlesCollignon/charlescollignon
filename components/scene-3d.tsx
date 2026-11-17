@@ -46,7 +46,7 @@ export default function Scene3D() {
         camera={{ fov: 45, zoom: 1.7, near: 10, far: 20000, position: [0, 160, 900], rotation: [0, 0, 0] }}
       >
         {/* Studio lighting baked into an environment map: no HDR download. */}
-        <Environment resolution={256} frames={1}>
+        <Environment resolution={512} frames={1}>
           <Lightformer intensity={3} position={[0, 6, -8]} scale={[12, 6, 1]} />
           <Lightformer intensity={2.2} rotation-y={Math.PI / 2} position={[-6, 1, 0]} scale={[20, 1.2, 1]} />
           <Lightformer intensity={2.2} rotation-y={-Math.PI / 2} position={[6, 1, 0]} scale={[20, 1.2, 1]} />
