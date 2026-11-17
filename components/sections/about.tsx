@@ -58,8 +58,10 @@ export function About() {
         </div>
       </div>
 
-      {/* The robot runs across while these scroll by. */}
-      <div data-camera="run" className="flex min-h-dvh flex-col justify-center gap-3">
+      {/* The run: the rows are pinned mid-screen while the robot runs across
+          above them; the pin releases once it has left on the right. */}
+      <div data-camera="run" className="relative h-[260dvh]">
+        <div className="sticky top-0 flex h-dvh flex-col justify-center gap-3">
         <Marquee
           speed={38}
           items={(interactive) =>
@@ -76,6 +78,13 @@ export function About() {
               <Chip key={item.label} item={item} interactive={interactive} />
             ))
           }
+        />
+        </div>
+        {/* Its top is where the pin ends. */}
+        <div
+          data-camera="runEnd"
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-dvh"
         />
       </div>
     </section>
