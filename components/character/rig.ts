@@ -21,7 +21,7 @@ import {
  *     blended as each section reaches the top of the viewport: chest-up in
  *     the hero corner, full height beside the About text, a run across the
  *     screen (scrubbed by scrolling, either way), then turned toward Contact.
- *  2. Motion capture, layered: a breathing idle underneath, the section's
+ *  2. Motion capture, layered: an idle loop underneath, the section's
  *     clip (looking around in About, a handshake at Contact), the run, and
  *     one-shot gestures on top. Each layer covers the ones below by its
  *     weight, so everything crossfades.
@@ -88,7 +88,7 @@ const envelope = (p: number, fadeIn: number, fadeOut: number) =>
   smoothstep(clamp(p / fadeIn, 0, 1)) * smoothstep(clamp((1 - p) / fadeOut, 0, 1));
 
 /** Clip names: the files in assets/animations. */
-const IDLE = "breathing-idle";
+const IDLE = "idle";
 const RUN = "running-jump";
 
 /** Additive offsets (radians, body space) a mood or action contributes. */
@@ -150,6 +150,11 @@ const RUN_SEGMENTS = [
   ["runIn", "runEnd"], // in from the left, across the pinned rows
 ];
 const RUN_PX_PER_SECOND = 450; // scroll distance that plays one second of running
+/**
+ * How far the hero camera backs off while the button push plays: right (so
+ * the figure stays in its corner), down and back.
+ */
+const PULL_BACK = [150, 70, 420];
 /** The running jump leaps high; keep it under the header. */
 const RUN_HIPS = 0.7;
 
@@ -372,6 +377,7 @@ export function createRig(model: Object3D, camera: Camera, clips: AnimationClip[
   const moodWeight: Record<string, number> = { hero: 1, about: 0, run: 0, runIn: 0, runEnd: 0, work: 0, contact: 0 };
   let lean = 0;
   let jolt = 0;
+  let pullBack = 0;
   let lastScroll = window.scrollY;
 
   const ro = new ResizeObserver(measure);
@@ -474,6 +480,8 @@ export function createRig(model: Object3D, camera: Camera, clips: AnimationClip[
       }
       // How much a gesture clip has the body: the cursor tracking eases off.
       let gesture = 0;
+      // The button push reaches below the hero close-up: the camera backs off.
+      let pull = 0;
       for (const a of running) {
         const def = ACTIONS[a.name];
         const p = clamp((t - a.start) / durationOf(a.name), 0, 1);
@@ -483,7 +491,9 @@ export function createRig(model: Object3D, camera: Camera, clips: AnimationClip[
           gesture = Math.max(gesture, w);
         }
         if (def.pose) add(acc, def.pose(p, t), w);
+        if (a.name === "push") pull = Math.max(pull, w);
       }
+      pullBack = damp(pullBack, pull * moodWeight.hero, 3, dt);
 
       // Top layer first: each takes its share of what's left.
       let left = 1;
@@ -507,9 +517,9 @@ export function createRig(model: Object3D, camera: Camera, clips: AnimationClip[
       /* ---------------------------------------------- body, head, arms */
 
       camera.position.set(
-        state.camX + pointer.sx * 45 * state.look,
-        state.camY - pointer.sy * 25 * state.look,
-        state.camZ,
+        state.camX + pointer.sx * 45 * state.look + pullBack * PULL_BACK[0],
+        state.camY - pointer.sy * 25 * state.look - pullBack * PULL_BACK[1],
+        state.camZ + pullBack * PULL_BACK[2],
       );
 
       bot.position.x = base.px + state.x;

@@ -29,20 +29,22 @@ import sharp from "sharp";
 import { SOURCE, boneKey, loadFBX } from "./lib/character.mjs";
 
 const SKIN = "assets/animations/quick-formal-bow.fbx";
-const TPOSE = "assets/animations/breathing-idle.fbx";
+const TPOSE = "assets/animations/idle.fbx";
 const ANIMATIONS = "assets/animations";
 const OUT = "public/models/character.glb";
 const FPS = 30;
 /** The site's scene units: feet at this height inside the "Bot" node. */
 const FEET_Y = -243;
 
-/** Dark chrome: a near-black mirror under a thin lacquer. */
+/** Dark chrome: a smoky mirror under a thin lacquer. */
 const CHROME = {
-  color: [0.16, 0.17, 0.19, 1], // linear
+  color: [0.26, 0.27, 0.3, 1], // linear
   metallic: 1,
-  roughness: 0.2,
-  clearcoat: 0.7,
-  clearcoatRoughness: 0.06,
+  roughness: 0.1,
+  clearcoat: 0.85,
+  clearcoatRoughness: 0.03,
+  /** Deepens the sculpted detail in the normal map. */
+  normalScale: 1.6,
 };
 
 const world = (o) => o.getWorldPosition(new THREE.Vector3());
@@ -211,7 +213,8 @@ material
   .setMetallicRoughnessTexture(null)
   .setBaseColorFactor(CHROME.color)
   .setMetallicFactor(CHROME.metallic)
-  .setRoughnessFactor(CHROME.roughness);
+  .setRoughnessFactor(CHROME.roughness)
+  .setNormalScale(CHROME.normalScale);
 for (const ext of material.listExtensions()) material.setExtension(ext.extensionName, null);
 const clearcoat = doc.createExtension(KHRMaterialsClearcoat);
 material.setExtension(

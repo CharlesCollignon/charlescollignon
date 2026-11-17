@@ -26,6 +26,11 @@ export function CharacterModel({ paused }: { paused: boolean }) {
       if (mesh.isMesh) {
         // The skinned pose moves outside the bind-pose bounds.
         mesh.frustumCulled = false;
+        // Chrome is all reflection: lift the environment, and keep the
+        // sculpted detail sharp at grazing angles.
+        const material = mesh.material as THREE.MeshPhysicalMaterial;
+        material.envMapIntensity = 1.6;
+        if (material.normalMap) material.normalMap.anisotropy = 8;
       }
     });
     const rig = createRig(scene, camera, animations);

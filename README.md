@@ -29,7 +29,7 @@ The character is "[Skinny humanoid metallic model](https://sketchfab.com/3d-mode
 | Make the Mixamo upload | `npm run character:mixamo` | `assets/models/character.source.glb` (the Sketchfab GLB) → `assets/models/character-mixamo.obj` |
 | Build the site's model | `npm run character:build` | `character.source.glb` + `assets/animations/*.fbx` → `public/models/character.glb` |
 
-The build takes the mesh, skeleton and skin weights from `assets/animations/quick-formal-bow.fbx` (downloaded from Mixamo *With Skin*) and the T-pose from `breathing-idle.fbx` (*Without Skin*). It retargets every FBX in `assets/animations/` onto the skeleton and gives the model a dark chrome finish over its own normal map. Clips made on any Mixamo character work.
+The build takes the mesh, skeleton and skin weights from `assets/animations/quick-formal-bow.fbx` (downloaded from Mixamo *With Skin*) and the T-pose from `idle.fbx` (*Without Skin*). It retargets every FBX in `assets/animations/` onto the skeleton and gives the model a dark chrome finish over its own normal map. Clips made on any Mixamo character work.
 
 To add an animation: in Mixamo, download it as *FBX Binary, 30 fps*, with *In Place* checked if offered. Save it in `assets/animations/`, run `npm run character:build`, then use it by its file name in `components/character/rig.ts`.
 
