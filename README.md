@@ -6,7 +6,7 @@ Live at [charlescollignon.com](https://www.charlescollignon.com) (English) and
 
 ## What's inside
 
-- **Home**: a Spline 3D hero whose camera follows the scroll, a manifesto that lights up word by word, and full-screen project panels that stack as you scroll, each in its project's own colours.
+- **Home**: a 3D robot (three.js) that rises in, follows the cursor and moves with the scroll, a manifesto that lights up word by word, and full-screen project panels that stack as you scroll, each in its project's own colours.
 - **Case studies** (`/work/[slug]`): [Phronesis](https://www.phronesis-france.com), [Pluclair](https://pluclair.com) and QuantCube's Macro Intelligence Platform. The MIP visuals are redrawn diagrams because the platform is private; they contain no client data.
 - **Interactions**: smooth scrolling, magnetic buttons, a context-aware cursor, text reveals, tilting device frames, and a horizontal gallery pinned to the scroll. Motion respects "reduce motion", touch devices skip the pointer effects, and constrained devices get a still frame instead of WebGL.
 - **English and French**: English at `/` and French at `/fr`, with hreflang tags, a sitemap, JSON-LD and generated Open Graph images for every page.
@@ -17,7 +17,7 @@ Live at [charlescollignon.com](https://www.charlescollignon.com) (English) and
 - TypeScript and Tailwind CSS 4
 - `next-intl`
 - GSAP (ScrollTrigger, SplitText), Lenis and Motion
-- Spline and React Three Fiber
+- three.js with React Three Fiber (model: `public/models/robot.glb`, optimised from `assets/models/robot.source.glb` by `npm run optimize:robot`)
 - Vercel Analytics and Speed Insights
 
 ## Develop

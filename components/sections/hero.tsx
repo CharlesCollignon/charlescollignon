@@ -20,8 +20,10 @@ export function Hero() {
   useGSAP(
     () => {
       if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+      // Animate `top`, not a transform: a transform would isolate the content
+      // in its own stacking context and break its mix-blend-difference text.
       gsap.to("[data-hero-content]", {
-        yPercent: -18,
+        top: "-16vh",
         opacity: 0,
         ease: "none",
         scrollTrigger: {
@@ -41,7 +43,7 @@ export function Hero() {
       data-camera="hero"
       className="relative flex min-h-dvh flex-col items-center justify-center"
     >
-      <div data-hero-content className="page-x flex flex-col items-center text-center">
+      <div data-hero-content className="page-x relative flex flex-col items-center text-center">
         <p
           className="css-fade eyebrow mb-4 text-zinc-300 mix-blend-difference dark:text-zinc-400"
           style={{ animationDelay: "0.2s" }}

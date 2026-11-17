@@ -87,7 +87,7 @@
   },
   "footer": {
     "rights": "Tous droits réservés.",
-    "built": "Construit avec Next.js, Spline, GSAP et Motion",
+    "built": "Construit avec Next.js, Three.js, GSAP et Motion",
     "top": "Retour en haut"
   },
   "caseStudy": {
