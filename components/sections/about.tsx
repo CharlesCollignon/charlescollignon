@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Marquee } from "@/components/motion/marquee";
 import { ScrollWords } from "@/components/motion/scroll-words";
@@ -42,6 +43,30 @@ function Chip({ item, interactive }: { item: SkillLink; interactive: boolean }) 
 
 export function About() {
   const t = useTranslations("about");
+  const runRef = useRef<HTMLDivElement>(null);
+  const [pinned, setPinned] = useState(false);
+
+  // While the run block is pinned the rows hold still; they move again once
+  // the robot has left and the page scrolls on.
+  useEffect(() => {
+    let frame = 0;
+    const check = () => {
+      frame = 0;
+      const r = runRef.current?.getBoundingClientRect();
+      setPinned(Boolean(r && r.top <= 1 && r.bottom >= window.innerHeight - 1));
+    };
+    const schedule = () => {
+      if (!frame) frame = requestAnimationFrame(check);
+    };
+    window.addEventListener("scroll", schedule, { passive: true });
+    window.addEventListener("resize", schedule);
+    check();
+    return () => {
+      window.removeEventListener("scroll", schedule);
+      window.removeEventListener("resize", schedule);
+      cancelAnimationFrame(frame);
+    };
+  }, []);
 
   return (
     <section id="about" className="relative w-full">
@@ -60,10 +85,11 @@ export function About() {
 
       {/* The run: the rows are pinned mid-screen while the robot runs across
           above them; the pin releases once it has left on the right. */}
-      <div data-camera="run" className="relative h-[260dvh]">
+      <div ref={runRef} data-camera="run" className="relative h-[260dvh]">
         <div className="sticky top-0 flex h-dvh flex-col justify-center gap-3">
         <Marquee
           speed={38}
+          frozen={pinned}
           items={(interactive) =>
             SKILLS.map((item) => (
               <Chip key={item.label} item={item} interactive={interactive} />
@@ -73,6 +99,7 @@ export function About() {
         <Marquee
           speed={46}
           reverse
+          frozen={pinned}
           items={(interactive) =>
             STACK.map((item) => (
               <Chip key={item.label} item={item} interactive={interactive} />

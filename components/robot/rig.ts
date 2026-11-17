@@ -50,20 +50,17 @@ type Pose = {
   look: number;
 };
 
-// The face sits ~237 units above the robot's origin; the whole robot spans
-// about -270…280 around it.
-const FACE_Y = 268;
-
 /** Landscape screens. */
 const WIDE: Record<string, Pose> = {
-  // Extreme close-up: the face fills the hero, looking straight out.
-  hero: { cam: [-3, FACE_Y, 285], x: 0, y: 0, ry: 0, rx: 0, look: 0.3 },
+  // Top-left corner, chest up (face ~23% across, ~30% down a 16:10 screen),
+  // turned toward the text in the bottom-right corner.
+  hero: { cam: [0, 200, 700], x: -150, y: 0, ry: 0.55, rx: 0, look: 0.5 },
   // Full robot on the left, turned toward the text on the right.
   about: { cam: [0, 40, 1450], x: -400, y: 0, ry: 0.6, rx: 0, look: 1 },
   // The run, above the pinned skill rows: the camera pulls back so the whole
   // robot fits between the header and the rows (feet ~385 px down a 900 px
-  // screen, head ~105 px). It enters on the left…
-  run: { cam: [0, -370, 3600], x: -950, y: 0, ry: 0.6, rx: 0, look: 0 },
+  // screen, head ~105 px). It enters from off-screen left…
+  run: { cam: [0, -370, 3600], x: -1650, y: 0, ry: 0.6, rx: 0, look: 0 },
   // …and has left on the right when the pin releases.
   runEnd: { cam: [0, -370, 3600], x: 1700, y: 0, ry: 0, rx: 0, look: 0 },
   work: { cam: [0, -370, 3600], x: 1700, y: 0, ry: 0, rx: 0, look: 0 },
@@ -73,10 +70,10 @@ const WIDE: Record<string, Pose> = {
 
 /** Portrait screens: the text spans the width, so the robot sits behind it. */
 const TALL: Record<string, Pose> = {
-  hero: { cam: [-3, FACE_Y, 470], x: 0, y: 0, ry: 0, rx: 0, look: 0.3 },
+  hero: { cam: [0, 150, 950], x: -55, y: 0, ry: 0.5, rx: 0, look: 0.5 },
   about: { cam: [0, 60, 2200], x: -170, y: 0, ry: 0.6, rx: 0, look: 1 },
   // Feet ~360 px down an 844 px screen, above the rows.
-  run: { cam: [0, -368, 3500], x: -280, y: 0, ry: 0.6, rx: 0, look: 0 },
+  run: { cam: [0, -368, 3500], x: -640, y: 0, ry: 0.6, rx: 0, look: 0 },
   runEnd: { cam: [0, -368, 3500], x: 650, y: 0, ry: 0, rx: 0, look: 0 },
   work: { cam: [0, -368, 3500], x: 650, y: 0, ry: 0, rx: 0, look: 0 },
   contact: { cam: [0, 110, 1750], x: 0, y: 0, ry: 0, rx: 0, look: 0.6 },
@@ -224,7 +221,8 @@ const MOODS: Record<
   string,
   { face: Expression; pose: (t: number) => Offsets; /** Looping motion-capture clip. */ clip?: string }
 > = {
-  hero: { face: "neutral", pose: () => ({}) },
+  // Looking down toward the text in the bottom-right corner.
+  hero: { face: "neutral", pose: () => ({ headRx: 0.2, headRy: 0.15 }) },
   about: { face: "reading", clip: "looking", pose: () => ({}) },
   run: { face: "happy", pose: () => ({}) },
   runEnd: { face: "happy", pose: () => ({}) },

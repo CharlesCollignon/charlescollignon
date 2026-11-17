@@ -17,11 +17,14 @@ import { cn } from "@/lib/utils";
  *   counts as a click on an item.
  * - Only the first copy is reachable by keyboard and screen readers.
  * - With reduced motion it is a plain horizontally scrollable row.
+ * - `frozen` eases it to a full stop and ignores scrolling (used while the
+ *   robot runs above the pinned rows).
  */
 export function Marquee({
   items,
   speed = 40,
   reverse = false,
+  frozen = false,
   className,
 }: {
   /** Render one copy of the items; `interactive` is false for the clones. */
@@ -29,6 +32,7 @@ export function Marquee({
   /** Drift speed in px/s. */
   speed?: number;
   reverse?: boolean;
+  frozen?: boolean;
   className?: string;
 }) {
   const rootRef = useRef<HTMLDivElement>(null);
@@ -37,6 +41,10 @@ export function Marquee({
   const [copies, setCopies] = useState(2);
   const still = useMediaQuery("(prefers-reduced-motion: reduce)");
   const lenis = useLenis();
+  const frozenRef = useRef(frozen);
+  useEffect(() => {
+    frozenRef.current = frozen;
+  }, [frozen]);
 
   // Enough copies to cover the row twice over, whatever the screen width.
   useEffect(() => {
@@ -87,9 +95,11 @@ export function Marquee({
       const scroll = window.scrollY;
       const v = lenis ? lenis.velocity * 60 : (scroll - lastScroll) / Math.max(dt, 1e-3);
       lastScroll = scroll;
-      boost += (Math.max(-1500, Math.min(1500, v)) * 0.25 - boost) * Math.min(1, dt * 6);
+      const frozenNow = frozenRef.current;
+      const boostTarget = frozenNow ? 0 : Math.max(-1500, Math.min(1500, v)) * 0.25;
+      boost += (boostTarget - boost) * Math.min(1, dt * 6);
 
-      rate += ((held ? 0 : 1) - rate) * Math.min(1, dt * 5);
+      rate += ((held || frozenNow ? 0 : 1) - rate) * Math.min(1, dt * 5);
 
       if (!dragging) {
         // Scrolling down pushes the row along its drift direction; up reverses it.
