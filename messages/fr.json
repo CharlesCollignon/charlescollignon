@@ -31,22 +31,7 @@
     "title": "Construire des expériences numériques",
     "p1": "Je suis engineering manager entre design et produit. J'emmène les produits du premier croquis jusqu'à la production : interface, design system et le code qui les livre.",
     "p2": "Chez QuantCube Technology, je dirige le design et l'ingénierie frontend de la Macro Intelligence Platform. En parallèle, je construis des produits comme Phronesis et Pluclair.",
-    "manifesto": "Je dirige le design et l'ingénierie de produits qui rendent les données complexes sereines, du premier croquis jusqu'au code qui les livre.",
-    "pillarsTitle": "Ma façon de travailler",
-    "pillars": {
-      "lead": {
-        "title": "Diriger",
-        "body": "Je fais du design et du frontend une seule équipe : des tokens partagés, des revues partagées, une seule définition du « fini ». Moins de passations, des décisions plus rapides."
-      },
-      "design": {
-        "title": "Concevoir",
-        "body": "Des interfaces et des design systems pensés pour les données denses : une hiérarchie claire, des chiffres honnêtes, des animations qui expliquent plutôt qu'elles ne décorent."
-      },
-      "build": {
-        "title": "Construire",
-        "body": "Du TypeScript en production avec React, Next.js et TanStack, de la visualisation de données avec ECharts et MapLibre, et du WebGL quand il le mérite."
-      }
-    }
+    "manifesto": "Je dirige le design et l'ingénierie de produits qui rendent les données complexes sereines, du premier croquis jusqu'au code qui les livre."
   },
   "work": {
     "eyebrow": "Projets choisis",

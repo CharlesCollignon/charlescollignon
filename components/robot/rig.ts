@@ -17,9 +17,11 @@ import { sampleBone, sampleHipsY, type ClipSet } from "./clips";
  * Procedural animation for the robot (public/models/robot.glb). The model has
  * no baked animation; everything is layered here, every frame:
  *
- *  1. Scroll choreography: one pose per page section (`data-camera`), blended
- *     as each section reaches the top of the viewport, with a full turn on
- *     the way from the hero to About.
+ *  1. Scroll choreography: one pose per page section (`data-camera`),
+ *     blended as each section reaches the top of the viewport: a face
+ *     close-up in the hero, the full robot beside the About text, a run
+ *     across the screen (scrubbed by scrolling, either way), then facing the
+ *     visitor at Contact.
  *  2. Idle life: breathing, weight shift, an arm sway, a heartbeat in the
  *     chest emblem, blinking, a slow look-around when the pointer is still.
  *  3. Pointer: head, then torso, then the whole body turn toward the cursor.
@@ -37,25 +39,45 @@ import { sampleBone, sampleHipsY, type ClipSet } from "./clips";
  * Everything eases with frame-rate independent damping. Units are Spline's.
  */
 
-type Pose = { cam: [number, number, number]; x: number; y: number; ry: number; rx: number };
+type Pose = {
+  cam: [number, number, number];
+  /** Robot offset from its authored position, and its turn/tilt (radians). */
+  x: number;
+  y: number;
+  ry: number;
+  rx: number;
+  /** How much the pointer steers the head, body and camera (0–1). */
+  look: number;
+};
 
-/** Landscape screens: the robot steps aside for left-aligned text. */
+// The face sits ~237 units above the robot's origin; the whole robot spans
+// about -270…280 around it.
+const FACE_Y = 268;
+
+/** Landscape screens. */
 const WIDE: Record<string, Pose> = {
-  hero: { cam: [0, 160, 900], x: 0, y: 0, ry: 0, rx: 0 },
-  about: { cam: [0, 150, 1350], x: 360, y: -20, ry: -0.55, rx: 0.04 },
-  work: { cam: [0, 70, 1300], x: 330, y: -50, ry: -0.7, rx: -0.14 },
-  contact: { cam: [0, 170, 1150], x: 300, y: -10, ry: -0.42, rx: 0 },
+  // Extreme close-up: the face fills the hero, looking straight out.
+  hero: { cam: [-3, FACE_Y, 285], x: 0, y: 0, ry: 0, rx: 0, look: 0.3 },
+  // Full robot on the left, turned toward the text on the right.
+  about: { cam: [0, 40, 1450], x: -400, y: 0, ry: 0.6, rx: 0, look: 1 },
+  // The run starts where About left it…
+  run: { cam: [0, 40, 1650], x: -420, y: 0, ry: 0.6, rx: 0, look: 0 },
+  // …and leaves the frame on the right as the projects arrive.
+  work: { cam: [0, 40, 1650], x: 900, y: 0, ry: 0, rx: 0, look: 0 },
+  // Facing the visitor beside "Let's work together".
+  contact: { cam: [0, 110, 1500], x: 380, y: 0, ry: -0.15, rx: 0, look: 0.6 },
 };
 
-/** Portrait screens: text spans the width, so the robot recedes behind it. */
+/** Portrait screens: the text spans the width, so the robot sits behind it. */
 const TALL: Record<string, Pose> = {
-  hero: { cam: [0, 170, 1150], x: 0, y: 0, ry: 0, rx: 0 },
-  about: { cam: [0, 240, 2100], x: 0, y: -40, ry: 0.5, rx: 0.05 },
-  work: { cam: [0, 120, 1900], x: 0, y: -80, ry: -0.6, rx: -0.12 },
-  contact: { cam: [0, 120, 1500], x: 0, y: 0, ry: -0.25, rx: 0 },
+  hero: { cam: [-3, FACE_Y, 470], x: 0, y: 0, ry: 0, rx: 0, look: 0.3 },
+  about: { cam: [0, 60, 2200], x: -170, y: 0, ry: 0.6, rx: 0, look: 1 },
+  run: { cam: [0, 60, 2300], x: -200, y: 0, ry: 0.6, rx: 0, look: 0 },
+  work: { cam: [0, 60, 2300], x: 520, y: 0, ry: 0, rx: 0, look: 0 },
+  contact: { cam: [0, 110, 1750], x: 0, y: 0, ry: 0, rx: 0, look: 0.6 },
 };
 
-const KEYS = ["camX", "camY", "camZ", "x", "y", "ry", "rx"] as const;
+const KEYS = ["camX", "camY", "camZ", "x", "y", "ry", "rx", "look"] as const;
 type State = Record<(typeof KEYS)[number], number>;
 
 const TAU = Math.PI * 2;
@@ -193,21 +215,23 @@ const ACTIONS: Record<ActionName, Action> = {
 };
 
 /** Section moods: held while in the section, blended in and out. */
-const MOODS: Record<string, { face: Expression; pose: (t: number) => Offsets }> = {
+const MOODS: Record<
+  string,
+  { face: Expression; pose: (t: number) => Offsets; /** Looping motion-capture clip. */ clip?: string }
+> = {
   hero: { face: "neutral", pose: () => ({}) },
-  about: {
-    face: "reading",
-    pose: (t) => ({ headRx: 0.14, headRy: -0.22, headRz: 0.06 + Math.sin(t * 0.8) * 0.03 }),
-  },
-  work: { face: "happy", pose: () => ({ headRx: -0.12 }) },
-  contact: { face: "heart", pose: (t) => ({ headRz: Math.sin(t * 1.3) * 0.06 }) },
+  about: { face: "reading", clip: "looking", pose: () => ({}) },
+  run: { face: "happy", pose: () => ({}) },
+  work: { face: "happy", pose: () => ({}) },
+  contact: { face: "heart", clip: "shaking-hands-2", pose: () => ({}) },
 };
 
 /** What to do when arriving in a section (at most every few seconds). */
-const ON_ENTER: Record<string, ActionName[]> = {
-  work: ["lookUp"],
-  contact: ["handshake"],
-};
+const ON_ENTER: Record<string, ActionName[]> = {};
+
+/** The run across the screen, scrubbed by scrolling. */
+const RUN_CLIPS = ["running", "running-jump"]; // a proper run cycle wins if present
+const RUN_PX_PER_SECOND = 450; // scroll distance that plays one second of running
 
 /**
  * Find nodes by their Spline name. three's GLTFLoader sanitises names
@@ -287,12 +311,13 @@ export function createRig(
       .sort((a, b) => a.top - b.top);
   };
 
-  const scrollPose = (): State & { section: string } => {
+  let runDir = 1; // +1 running right (scrolling down), -1 left (scrolling up)
+  const scrollPose = (): State & { section: string; runZone: number } => {
     const poses = wide ? WIDE : TALL;
     const from = (p: Pose): State => ({
-      camX: p.cam[0], camY: p.cam[1], camZ: p.cam[2], x: p.x, y: p.y, ry: p.ry, rx: p.rx,
+      camX: p.cam[0], camY: p.cam[1], camZ: p.cam[2], x: p.x, y: p.y, ry: p.ry, rx: p.rx, look: p.look,
     });
-    if (stops.length < 2) return { ...from(poses.hero), section: "hero" };
+    if (stops.length < 2) return { ...from(poses.hero), section: "hero", runZone: 0 };
 
     const y = window.scrollY;
     let i = 0;
@@ -300,17 +325,25 @@ export function createRig(
     const a = from(poses[stops[i].key]);
     const b = from(poses[stops[i + 1].key]);
     const span = Math.max(stops[i + 1].top - stops[i].top, 1);
-    const t = smoothstep(clamp((y - stops[i].top) / span, 0, 1));
+    const linear = clamp((y - stops[i].top) / span, 0, 1);
+    const t = smoothstep(linear);
     const out = {} as State;
     for (const k of KEYS) out[k] = a[k] + (b[k] - a[k]) * t;
-    // A full turn while travelling from the hero to About.
-    if (stops[i].key === "hero" && stops[i + 1].key === "about") out.ry += TAU * t;
+
+    // Running: constant speed across the screen, facing the way it runs.
+    let runZone = 0;
+    if (stops[i].key === "run" && stops[i + 1].key === "work") {
+      out.x = a.x + (b.x - a.x) * linear;
+      runZone = clamp(linear * 8, 0, 1) * clamp((1 - linear) * 8, 0, 1);
+      const facing = runDir > 0 ? Math.PI / 2 : -Math.PI / 2;
+      out.ry = a.ry + (facing - a.ry) * clamp(linear * 8, 0, 1);
+    }
 
     // The section under the middle of the viewport sets the mood.
     const mid = y + window.innerHeight * 0.5;
     let section = stops[0].key;
     for (const s of stops) if (mid >= s.top) section = s.key;
-    return { ...out, section };
+    return { ...out, section, runZone };
   };
 
   /* ---------------------------------------------------------- input */
@@ -386,6 +419,9 @@ export function createRig(
   }
 
   const lastEntered: Record<string, number> = {};
+  const moodStart: Record<string, number> = {};
+  let runPhase = 0;
+  let runActivity = 0;
   let section = "hero";
   let introDone = false;
   let nextIdle = 9;
@@ -428,7 +464,7 @@ export function createRig(
   measure();
   const state: State = { ...scrollPose(), y: -1400 }; // rises in from below
   bot.position.y = base.py + state.y;
-  const moodWeight: Record<string, number> = { hero: 1, about: 0, work: 0, contact: 0 };
+  const moodWeight: Record<string, number> = { hero: 1, about: 0, run: 0, work: 0, contact: 0 };
   let lean = 0;
   let jolt = 0;
   let lastScroll = window.scrollY;
@@ -474,6 +510,7 @@ export function createRig(
       const velocity = (scroll - lastScroll) / Math.max(dt, 1e-3);
       lastScroll = scroll;
       lean = damp(lean, clamp(velocity * 0.00006, -0.14, 0.14), 6, dt);
+      if (Math.abs(velocity) > 30) runDir = Math.sign(velocity);
       const fast = Math.abs(velocity) > 1800;
       jolt = damp(jolt, clamp((Math.abs(velocity) - 1800) / 2500, 0, 1), fast ? 10 : 2.5, dt);
 
@@ -497,12 +534,30 @@ export function createRig(
       }
       if (target.section !== section) {
         section = target.section;
+        moodStart[section] = t;
         const now = performance.now();
         if (introDone && now - (lastEntered[section] ?? -1e9) > 5000) {
           lastEntered[section] = now;
           queue = [];
           ON_ENTER[section]?.forEach((name, i) => (i === 0 ? play(name, true) : queue.push(name)));
         }
+      }
+
+      // The run: scrolling drives the stride; when scrolling stops, the robot
+      // finishes its stride (or leap) and settles instead of freezing mid-air.
+      const runName = RUN_CLIPS.find((n) => clipSet?.clips[n]);
+      const runClip = runName ? clipSet!.clips[runName] : undefined;
+      let runWeight = 0;
+      if (runClip && target.runZone > 0) {
+        const moving = Math.abs(velocity) > 20;
+        const local = runPhase % runClip.duration;
+        const midStride = local > 0.04 && local < runClip.duration - 0.04;
+        if (moving) runPhase += (Math.abs(velocity) * dt) / RUN_PX_PER_SECOND;
+        else if (midStride) runPhase += dt;
+        runActivity = damp(runActivity, moving || midStride ? 1 : 0, 6, dt);
+        runWeight = target.runZone * runActivity;
+      } else {
+        runActivity = damp(runActivity, 0, 6, dt);
       }
 
       // Actions: retire finished ones, then start the next queued one.
@@ -513,9 +568,8 @@ export function createRig(
       const still = Math.abs(velocity) < 5;
       if (introDone && still && !running.length && !queue.length) {
         if (t > nextIdle) {
-          const pool: ActionName[] =
-            section === "about" ? ["curious", "look"] : ["look", "curious", "stretch", "point", "wave"];
-          play(pool[Math.floor(Math.random() * pool.length)]);
+          // Other sections have their own clip; the close-up gets a head tilt.
+          if (section === "hero") play("curious");
           nextIdle = t + 9 + Math.random() * 7;
         }
       } else {
@@ -557,7 +611,7 @@ export function createRig(
         if (def.face && w > 0.3) face = def.face;
       }
       // Fast scrolling: arms fly out, the face startles.
-      if (jolt > 0.05) {
+      if (jolt > 0.05 && target.runZone === 0) {
         acc.armZ[0] += jolt * 0.55;
         acc.armZ[1] += jolt * 0.55;
         acc.headRx -= jolt * 0.1;
@@ -575,13 +629,27 @@ export function createRig(
 
       // The motion-capture pose of a part (idle loop, crossfaded with the
       // current gesture), or null when it isn't driven by a clip.
+      // Layers, bottom to top: breathing idle, section clips (Looking,
+      // handshake), the run, then any gesture.
+      const layers: { clip: string; time: number; weight: number; hips?: number }[] = [];
+      for (const key of Object.keys(moodWeight)) {
+        const clip = MOODS[key]?.clip;
+        const c = clip && clipSet?.clips[clip];
+        if (c && moodWeight[key] > 0.001) {
+          layers.push({ clip, time: (t - (moodStart[key] ?? 0)) % c.duration, weight: moodWeight[key] });
+        }
+      }
+      if (runClip && runWeight > 0.001) {
+        layers.push({ clip: runName!, time: runPhase % runClip.duration, weight: runWeight, hips: 0.7 });
+      }
+      if (gesture) layers.push(gesture);
+
       const clipPose = (obj: Object3D) => {
         const bone = boneOf.get(obj);
         const base = clipSet?.clips[BASE_CLIP];
         if (!bone || !base || !sampleBone(base, bone, t % base.duration, blendQ)) return null;
-        if (gesture) {
-          const g = clipSet!.clips[gesture.clip];
-          if (sampleBone(g, bone, gesture.time, clipQ)) blendQ.slerp(clipQ, gesture.weight);
+        for (const layer of layers) {
+          if (sampleBone(clipSet!.clips[layer.clip], bone, layer.time, clipQ)) blendQ.slerp(clipQ, layer.weight);
         }
         return blendQ;
       };
@@ -610,8 +678,8 @@ export function createRig(
       const hm = (key: "armX" | "armZ" | "elbowZ" | "forearmX", i: number) => handmade?.off[key]?.[i] ?? 0;
 
       camera.position.set(
-        state.camX + pointer.sx * 45,
-        state.camY - pointer.sy * 25,
+        state.camX + pointer.sx * 45 * state.look,
+        state.camY - pointer.sy * 25 * state.look,
         state.camZ,
       );
 
@@ -620,9 +688,9 @@ export function createRig(
       if (mocap) {
         const base = clipSet!.clips[BASE_CLIP];
         hipsY = sampleHipsY(base, t % base.duration);
-        if (gesture) {
-          const g = clipSet!.clips[gesture.clip];
-          hipsY += (sampleHipsY(g, gesture.time) - hipsY) * gesture.weight;
+        for (const layer of layers) {
+          const y = sampleHipsY(clipSet!.clips[layer.clip], layer.time) * (layer.hips ?? 1);
+          hipsY += (y - hipsY) * layer.weight;
         }
       }
       bot.position.x = base.px + state.x;
@@ -630,17 +698,25 @@ export function createRig(
         base.py + state.y + (mocap ? hipsY : breathe * 2.5) - Math.abs(lean) * 40 + acc.botY;
       // The scroll pose turns the whole robot; the clip moves the hips within it.
       euler.set(
-        base.rx + state.rx + pointer.sy * 0.04 + lean,
-        base.ry + state.ry + pointer.sx * 0.28 + Math.sin(t * 0.31) * 0.05 + acc.botRy,
-        base.rz + shift * 0.022 - pointer.sx * 0.03,
+        base.rx + state.rx + pointer.sy * 0.04 * state.look + lean,
+        base.ry + state.ry + (pointer.sx * 0.28 + Math.sin(t * 0.31) * 0.05) * state.look + acc.botRy,
+        base.rz + shift * 0.022 - pointer.sx * 0.03 * state.look,
       );
       bot.quaternion.setFromEuler(euler);
       const hipsQ = clipPose(bot);
       if (hipsQ) bot.quaternion.multiply(hipsQ);
 
       if (hipsJ) hipsJ.obj.rotation.z = hipsJ.z - (mocap ? 0 : shift * 0.035);
-      if (topJ) pose(topJ, pointer.sy * 0.06 + (mocap ? 0 : breathe * 0.012) + acc.topRx, pointer.hx * 0.14, 0);
-      if (headJ) pose(headJ, pointer.hy * 0.32 + acc.headRx, pointer.hx * 0.5 + acc.headRy, -pointer.hx * 0.06 + acc.headRz);
+      const look = state.look;
+      if (topJ) pose(topJ, pointer.sy * 0.06 * look + (mocap ? 0 : breathe * 0.012) + acc.topRx, pointer.hx * 0.14 * look, 0);
+      if (headJ) {
+        pose(
+          headJ,
+          pointer.hy * 0.32 * look + acc.headRx,
+          pointer.hx * 0.5 * look + acc.headRy,
+          -pointer.hx * 0.06 * look + acc.headRz,
+        );
+      }
 
       // Arms: the clip (or a slow procedural sway), plus moods and actions.
       const sway = mocap ? 0 : 1;

@@ -31,22 +31,7 @@
     "title": "Building digital experiences",
     "p1": "I'm an engineering manager working across design and product. I take products from first sketch to production: interface, design system and the code that ships them.",
     "p2": "At QuantCube Technology I lead design and frontend engineering for the Macro Intelligence Platform. On my own time I build products like Phronesis and Pluclair.",
-    "manifesto": "I lead design and engineering for products that make complex data feel calm, from the first sketch to the code that ships it.",
-    "pillarsTitle": "How I work",
-    "pillars": {
-      "lead": {
-        "title": "Lead",
-        "body": "I run design and frontend as one team: shared tokens, shared reviews, one definition of done. Fewer handoffs, faster decisions."
-      },
-      "design": {
-        "title": "Design",
-        "body": "Interfaces and design systems built for dense data: clear hierarchy, honest numbers, motion that explains rather than decorates."
-      },
-      "build": {
-        "title": "Build",
-        "body": "Production TypeScript with React, Next.js and TanStack, data visualisation with ECharts and MapLibre, and WebGL when it earns its place."
-      }
-    }
+    "manifesto": "I lead design and engineering for products that make complex data feel calm, from the first sketch to the code that ships it."
   },
   "work": {
     "eyebrow": "Selected work",

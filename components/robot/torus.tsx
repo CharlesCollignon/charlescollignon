@@ -5,20 +5,27 @@ import { useFrame } from "@react-three/fiber";
 import type * as THREE from "three";
 
 /**
- * The iridescent torus knot that orbits the robot. It shares the robot's
- * canvas, so it passes in front of and behind it with real depth.
+ * The iridescent torus knot that orbits the robot, following it around the
+ * page. It shares the robot's canvas, so it passes in front of and behind it
+ * with real depth.
  * Units match the robot scene (Spline units).
  */
 export function Torus() {
   const ref = useRef<THREE.Mesh>(null);
+  const bot = useRef<THREE.Object3D | null>(null);
+  const center = useRef(0);
 
-  useFrame((state) => {
+  useFrame((state, dt) => {
     const mesh = ref.current;
     if (!mesh) return;
     const t = state.clock.getElapsedTime();
+    // Orbit the robot wherever the choreography takes it.
+    bot.current ??= state.scene.getObjectByName("Bot") ?? null;
+    const target = bot.current?.position.x ?? 0;
+    center.current += (target - center.current) * (1 - Math.exp(-3 * Math.min(dt, 0.05)));
     const rx = 380 + Math.sin(t * 0.3) * 160;
     const rz = 240 + Math.cos(t * 0.2) * 110;
-    mesh.position.x = Math.sin(t * 0.4) * rx;
+    mesh.position.x = center.current + Math.sin(t * 0.4) * rx;
     mesh.position.z = Math.cos(t * 0.4) * rz;
     // Starts high and drifts down as the page scrolls.
     mesh.position.y = 420 - window.scrollY * 0.45 + Math.sin(t * 0.5) * 50;
