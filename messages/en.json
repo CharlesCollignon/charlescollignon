@@ -289,5 +289,8 @@
     "title": "Page not found",
     "body": "This page doesn't exist, or it moved.",
     "home": "Back home"
+  },
+  "cursor": {
+    "robot": "Say hi"
   }
 }

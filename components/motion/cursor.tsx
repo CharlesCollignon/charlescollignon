@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion, useMotionValue, useSpring } from "motion/react";
+import { useTranslations } from "next-intl";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { cn } from "@/lib/utils";
 
@@ -11,6 +12,7 @@ import { cn } from "@/lib/utils";
  * reduced motion; the native cursor stays visible for accessibility.
  */
 export function Cursor() {
+  const robotLabel = useTranslations("cursor")("robot");
   const enabled = useMediaQuery(
     "(pointer: fine) and (prefers-reduced-motion: no-preference)",
   );
@@ -33,9 +35,11 @@ export function Cursor() {
 
       const target = e.target instanceof Element ? e.target : null;
       const labelled = target?.closest<HTMLElement>("[data-cursor]");
-      setLabel(labelled?.dataset.cursor || null);
+      // The 3D robot sets this class while the pointer is over it.
+      const overRobot = document.documentElement.classList.contains("robot-hover");
+      setLabel(labelled?.dataset.cursor || (overRobot ? robotLabel : null));
       setHovering(
-        Boolean(labelled || target?.closest("a, button, [role='button']")),
+        Boolean(labelled || overRobot || target?.closest("a, button, [role='button']")),
       );
     };
     const onLeave = () => setVisible(false);
@@ -46,7 +50,7 @@ export function Cursor() {
       window.removeEventListener("pointermove", onMove);
       document.documentElement.removeEventListener("pointerleave", onLeave);
     };
-  }, [enabled, x, y]);
+  }, [enabled, x, y, robotLabel]);
 
   if (!enabled) return null;
 

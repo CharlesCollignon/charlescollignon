@@ -46,6 +46,15 @@ await doc.transform(
   meshopt({ encoder: MeshoptEncoder, level: "high" }),
 );
 
+// Quantization moves the mesh of a node that has children (e.g. "Body") onto
+// a new unnamed child. Name it after its parent so the site can find it.
+for (const node of root.listNodes()) {
+  const parentNode = node.getParentNode();
+  if (!node.getName() && node.getMesh() && parentNode?.getName() && !parentNode.getMesh()) {
+    node.setName(`${parentNode.getName()} surface`);
+  }
+}
+
 await io.write(OUT, doc);
 const { statSync } = await import("node:fs");
 console.log(`${OUT}: ${(statSync(OUT).size / 1024).toFixed(0)} KB (from ${(statSync(SRC).size / 1024).toFixed(0)} KB)`);

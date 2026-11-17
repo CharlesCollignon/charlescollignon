@@ -289,5 +289,8 @@
     "title": "Page introuvable",
     "body": "Cette page n'existe pas, ou elle a été déplacée.",
     "home": "Retour à l'accueil"
+  },
+  "cursor": {
+    "robot": "Coucou"
   }
 }
