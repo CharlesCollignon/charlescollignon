@@ -10,14 +10,17 @@
  *    (npm run character:mixamo makes the upload). Its rest pose is a T-pose;
  *    the model stands in an A-pose, so each arm bone is first swung onto the
  *    mesh's arm (the direction that runs through the most vertices).
- * 2. Skin weights: each vertex goes to its nearest bone segment, stray islands
- *    (a thigh next to a hand) are handed to the next-nearest bone, then the
- *    weights are diffused across the surface so joints bend smoothly.
- * 3. Animations: every FBX in assets/animations is retargeted onto the
+ * 2. Joints: elbows, wrists, knees and ankles are centred in their limb
+ *    (Mixamo's markers can leave them on the surface).
+ * 3. Skin weights: each vertex goes to the nearest bone it can "see" through
+ *    the inside of the body (so ribs beside a hanging arm stay with the
+ *    spine), stray patches join the bone around them, then the weights are
+ *    diffused across the surface so joints bend smoothly.
+ * 4. Animations: every FBX in assets/animations is retargeted onto the
  *    skeleton (world-space rotation deltas from the T-pose, so clips made on
  *    other Mixamo characters work too). Played in place: the hips keep their
  *    vertical motion only. Clips are named after their files.
- * 4. The source's material and textures are carried over; textures become
+ * 5. The source's material and textures are carried over; textures become
  *    1024 px WebP.
  */
 import { readdirSync, statSync, writeFileSync } from "node:fs";
@@ -27,6 +30,7 @@ import { NodeIO } from "@gltf-transform/core";
 import { ALL_EXTENSIONS } from "@gltf-transform/extensions";
 import { copyToDocument, meshopt, prune, quantize, resample, textureCompress } from "@gltf-transform/functions";
 import { MeshoptEncoder } from "meshoptimizer";
+import { MeshBVH } from "three-mesh-bvh";
 import sharp from "sharp";
 import { SOURCE, boneKey, loadCharacterGeometry, loadFBX } from "./lib/character.mjs";
 
@@ -145,6 +149,52 @@ for (const [side, s] of [["Left", 1], ["Right", -1]]) {
 }
 rig.updateMatrixWorld(true);
 
+/**
+ * Centre the limb joints in their limb. Mixamo's markers put some joints on
+ * the surface (the knee and ankle against the back of the leg); a bone
+ * outside the body skins badly. Each joint moves to the middle of the limb's
+ * cross-section around it; its children keep their places.
+ */
+function centreJoint(name, parentName, limbPoints) {
+  const j = world(bone(name));
+  const d = j.clone().sub(world(bone(parentName))).normalize();
+  const ring = limbPoints.filter((p) => {
+    const rel = p.clone().sub(j);
+    const along = rel.dot(d);
+    return Math.abs(along) < 3 && rel.addScaledVector(d, -along).length() < 35;
+  });
+  if (ring.length < 8) return null;
+  const c = ring.reduce((a, p) => a.add(p), new THREE.Vector3()).divideScalar(ring.length);
+  // Stay in the cross-section's plane: only the sideways offset moves.
+  const off = c.sub(j);
+  return j.clone().add(off.addScaledVector(d, -off.dot(d)));
+}
+const legPoints = (side) => points.filter((p) => p.x * side > 3 && p.y < world(hips).y);
+const centred = new Map();
+for (const [side, s] of [["Left", 1], ["Right", -1]]) {
+  for (const [joint, parent, pts] of [
+    [`${side}ForeArm`, `${side}Arm`, arms[s]],
+    [`${side}Hand`, `${side}ForeArm`, arms[s]],
+    [`${side}Leg`, `${side}UpLeg`, legPoints(s)],
+    [`${side}Foot`, `${side}Leg`, legPoints(s)],
+  ]) {
+    const to = centreJoint(joint, parent, pts);
+    if (to) centred.set(bone(joint), to);
+  }
+}
+// Apply parents first, keeping every other joint where it was.
+const keep = new Map([...bones.values()].map((b) => [b, world(b)]));
+for (const [b, to] of centred) {
+  console.log(`centred ${b.name.replace("mixamorig", "")}: moved ${to.distanceTo(keep.get(b)).toFixed(1)}`);
+  keep.set(b, to);
+}
+for (const b of bones.values()) {
+  if (b === hips) continue;
+  b.parent.updateMatrixWorld(true);
+  b.position.copy(b.parent.worldToLocal(keep.get(b).clone()));
+  b.updateMatrixWorld(true);
+}
+
 /* ---------------------------------------------------------------- weights */
 
 // Each weighted bone covers the segment to its child.
@@ -153,9 +203,8 @@ const SEGMENTS = [
   ["Neck", "Head"], ["Head", "HeadTop_End"],
   ...["Left", "Right"].flatMap((s) => [
     [`${s}Shoulder`, `${s}Arm`], [`${s}Arm`, `${s}ForeArm`], [`${s}ForeArm`, `${s}Hand`],
-    [`${s}Hand`, `${s}HandIndex1`],
-    [`${s}HandIndex1`, `${s}HandIndex2`], [`${s}HandIndex2`, `${s}HandIndex3`], [`${s}HandIndex3`, `${s}HandIndex4`],
-    [`${s}HandThumb1`, `${s}HandThumb2`], [`${s}HandThumb2`, `${s}HandThumb3`], [`${s}HandThumb3`, `${s}HandThumb4`],
+    // The fingers are sculpted together: the whole hand follows the hand bone.
+    [`${s}Hand`, `${s}HandIndex4`],
     [`${s}UpLeg`, `${s}Leg`], [`${s}Leg`, `${s}Foot`], [`${s}Foot`, `${s}ToeBase`], [`${s}ToeBase`, `${s}Toe_End`],
   ]),
 ].filter(([a, b]) => bones.has(a) && bones.has(b));
@@ -196,18 +245,48 @@ for (let i = 0; i < C; i++) {
 }
 edge /= edges;
 
-// 1. Nearest segment, with the alternatives ranked for reassignment.
-const ranked = [];
-const label = new Int32Array(C);
-for (let i = 0; i < C; i++) {
-  const order = segs.map((s, k) => [k, segDist(corners[i], s.a, s.b)]).sort((x, y) => x[1] - y[1]);
-  ranked.push(order.map(([k]) => k));
-  label[i] = order[0][0];
-}
+// 1. The nearest bone the vertex can "see" through the inside of the body
+//    (as auto-riggers do): a rib next to the hanging arm is closer to the arm
+//    bone, but the line to it leaves the body, so the rib stays with the spine.
+const welded = new THREE.BufferGeometry();
+welded.setAttribute("position", new THREE.Float32BufferAttribute(corners.flatMap((p) => p.toArray()), 3));
+welded.setIndex(Array.from(index, (v) => weld[v]));
+welded.computeVertexNormals();
+const bvh = new MeshBVH(welded);
+const cornerNormal = (i) => new THREE.Vector3().fromBufferAttribute(welded.attributes.normal, i);
+const closest = (p, s) => {
+  const ab = s.b.clone().sub(s.a);
+  const t = THREE.MathUtils.clamp(p.clone().sub(s.a).dot(ab) / ab.lengthSq(), 0, 1);
+  return s.a.clone().addScaledVector(ab, t);
+};
+const ray = new THREE.Ray();
+const visible = (p, n, s) => {
+  const from = p.clone().addScaledVector(n, -0.3); // just inside the surface
+  const to = closest(from, s);
+  const d = to.distanceTo(from);
+  if (d < 0.5) return true;
+  ray.set(from, to.clone().sub(from).normalize());
+  const hit = bvh.raycastFirst(ray, THREE.DoubleSide);
+  return !hit || hit.distance > d - 0.5;
+};
 
-// 2. Each bone keeps only its largest connected patch; strays move on to their
-//    next-nearest bone (a thigh beside the hand is not part of the hand).
-for (let pass = 0; pass < 6; pass++) {
+const label = new Int32Array(C);
+let hidden = 0;
+for (let i = 0; i < C; i++) {
+  const p = corners[i];
+  const order = segs.map((s, k) => [k, segDist(p, s.a, s.b)]).sort((x, y) => x[1] - y[1]);
+  const n = cornerNormal(i);
+  const seen = order.filter(([k], j) => j < 6 && visible(p, n, segs[k]));
+  // Visible bones first, nearest first; the rest after, as fallbacks.
+  const rank = [...seen, ...order.filter((o) => !seen.includes(o))].map(([k]) => k);
+  if (seen.length && seen[0] !== order[0]) hidden++;
+  label[i] = rank[0];
+}
+console.log(`visibility: ${hidden} corners moved off a bone they can't see`);
+
+// 2. Each bone keeps only its largest connected patch; any other patch joins
+//    the bone that surrounds it (a bit of thigh tagged as hand becomes thigh).
+for (let pass = 0; pass < 30; pass++) {
   let moved = 0;
   const seen = new Uint8Array(C);
   const patches = Array.from({ length: B }, () => []);
@@ -231,19 +310,25 @@ for (let pass = 0; pass < 6; pass++) {
   for (const list of patches) {
     list.sort((a, b) => b.length - a.length);
     for (const patch of list.slice(1)) {
+      const own = label[patch[0]];
+      const votes = new Map();
       for (const v of patch) {
-        const r = ranked[v];
-        label[v] = r[r.indexOf(label[v]) + 1] ?? label[v];
-        moved++;
+        for (const n of neighbours[v]) {
+          if (label[n] !== own) votes.set(label[n], (votes.get(label[n]) ?? 0) + 1);
+        }
       }
+      const winner = [...votes].sort((a, b) => b[1] - a[1])[0]?.[0];
+      if (winner === undefined) continue;
+      for (const v of patch) label[v] = winner;
+      moved += patch.length;
     }
   }
   if (!moved) break;
-  console.log(`pass ${pass}: ${moved} stray corners reassigned`);
+  console.log(`pass ${pass}: ${moved} stray corners merged into their surroundings`);
 }
 
 // 3. Diffuse across the surface so each joint blends over ~BLEND units.
-const BLEND = 12;
+const BLEND = 22;
 const iterations = Math.max(4, Math.round((BLEND / edge) ** 2));
 let w = new Float32Array(C * B);
 for (let i = 0; i < C; i++) w[i * B + label[i]] = 1;
