@@ -30,7 +30,9 @@ The robot is a GLB exported from Spline. It is animated in code (`components/rob
 | Make the Mixamo upload | `npm run robot:mixamo` | a T-posed single-mesh OBJ, `assets/models/robot-tpose.obj` |
 | Bake the animations | `npm run robot:bake` | `assets/animations/*.fbx` (Mixamo, *FBX Binary, Without Skin, 30 fps*) → `public/models/robot-clips.json` |
 
-The bake retargets each Mixamo bone onto the matching robot part, so the robot keeps its materials, LED face and emblem. To add an animation, drop the FBX in `assets/animations/`, run the bake, then reference the clip by its file name in `components/robot/rig.ts`.
+The bake retargets each Mixamo bone onto the matching robot part, so the robot keeps its materials, LED face and emblem.
+
+Other characters can be tried with `?model=<key>` (listed in `CHARACTERS`, `components/robot/robot-model.tsx`). `?model=humanoid` shows "Humanoid Model" by CowboyTruman (CC BY 4.0, credited on the page while it is shown), prepared with `npm run humanoid:optimize` from the Sketchfab download in `assets/models/`. To add an animation, drop the FBX in `assets/animations/`, run the bake, then reference the clip by its file name in `components/robot/rig.ts`.
 
 ## Develop
 

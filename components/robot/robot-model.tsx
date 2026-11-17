@@ -8,7 +8,24 @@ import { createRig, nodeName, type Rig } from "./rig";
 import { EYE_COLS, EYE_ROWS } from "./face";
 import { loadClips } from "./clips";
 
-export const ROBOT_URL = "/models/robot.glb";
+/**
+ * Characters the scene can show. The robot is the default; others can be
+ * tried with ?model=<key> (see scene-3d.tsx). Each is wrapped in a "Bot" node,
+ * so the rig's choreography moves any of them.
+ */
+export const CHARACTERS = {
+  robot: { url: "/models/robot.glb", parts: true, credit: null },
+  humanoid: {
+    url: "/models/humanoid.glb",
+    // A single unrigged mesh: no LED face, emblem or motion capture.
+    parts: false,
+    credit: {
+      label: "“Humanoid Model” by CowboyTruman, CC BY 4.0",
+      href: "https://sketchfab.com/3d-models/humanoid-model-4f56bd97eaa7421a80e12d35ef78d22b",
+    },
+  },
+} as const;
+export type CharacterKey = keyof typeof CHARACTERS;
 
 /**
  * The exported model has no materials (Spline only exports colours on paid
@@ -45,6 +62,15 @@ function makeMaterials() {
     }),
     // Colours come per dot from the rig (instanceColor); white keeps them true.
     led: new THREE.MeshBasicMaterial({ color: "#ffffff", toneMapped: false }),
+    // Single-mesh characters: glossy white ceramic.
+    ceramic: new THREE.MeshPhysicalMaterial({
+      color: "#f2f1ee",
+      metalness: 0,
+      roughness: 0.3,
+      clearcoat: 1,
+      clearcoatRoughness: 0.08,
+      envMapIntensity: 0.65,
+    }),
   };
 }
 
@@ -223,8 +249,15 @@ function buildEmblem(top: THREE.Object3D, body: THREE.Mesh) {
   };
 }
 
-export function RobotModel({ paused }: { paused: boolean }) {
-  const { scene } = useGLTF(ROBOT_URL, false, true);
+export function RobotModel({
+  paused,
+  character = "robot",
+}: {
+  paused: boolean;
+  character?: CharacterKey;
+}) {
+  const spec = CHARACTERS[character];
+  const { scene } = useGLTF(spec.url, false, true);
   const camera = useThree((s) => s.camera);
   const materials = useMemo(() => makeMaterials(), []);
 
@@ -235,7 +268,7 @@ export function RobotModel({ paused }: { paused: boolean }) {
     scene.traverse((o) => {
       if ((o as THREE.Mesh).isMesh) {
         const mesh = o as THREE.Mesh;
-        mesh.material = materialFor(mesh, materials);
+        mesh.material = spec.parts ? materialFor(mesh, materials) : materials.ceramic;
         mesh.frustumCulled = false;
       }
     });
@@ -252,18 +285,20 @@ export function RobotModel({ paused }: { paused: boolean }) {
         return undefined;
       }
     };
-    const eyes = head && face ? attempt(() => buildEyes(head, face, materials.led)) : undefined;
-    const emblem = top && body ? attempt(() => buildEmblem(top, body)) : undefined;
+    const eyes = spec.parts && head && face ? attempt(() => buildEyes(head, face, materials.led)) : undefined;
+    const emblem = spec.parts && top && body ? attempt(() => buildEmblem(top, body)) : undefined;
     const rig = createRig(scene, camera, { eyes: eyes?.grid, emblem: emblem?.material });
     rigRef.current = rig;
     // Motion capture streams in after the robot appears; until then (or if it
     // fails) the rig animates procedurally.
     let cancelled = false;
-    loadClips(scene)
-      .then((set) => {
-        if (!cancelled) rig?.setClips(set);
-      })
-      .catch((error) => console.warn("Robot: motion clips unavailable", error));
+    if (spec.parts) {
+      loadClips(scene)
+        .then((set) => {
+          if (!cancelled) rig?.setClips(set);
+        })
+        .catch((error) => console.warn("Robot: motion clips unavailable", error));
+    }
     // Development-only handle for tuning poses from the console.
     if (process.env.NODE_ENV === "development") {
       (window as unknown as { __robot: unknown }).__robot = { scene, rig };
@@ -275,7 +310,7 @@ export function RobotModel({ paused }: { paused: boolean }) {
       eyes?.dispose();
       emblem?.dispose();
     };
-  }, [scene, camera, materials]);
+  }, [scene, camera, materials, spec]);
 
   useEffect(
     () => () => Object.values(materials).forEach((mat) => mat.dispose()),
@@ -291,4 +326,4 @@ export function RobotModel({ paused }: { paused: boolean }) {
   return <primitive object={scene} />;
 }
 
-useGLTF.preload(ROBOT_URL, false, true);
+useGLTF.preload(CHARACTERS.robot.url, false, true);
