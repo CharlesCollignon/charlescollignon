@@ -27,9 +27,9 @@ import {
  *     weight, so everything crossfades.
  *  3. On top of the clips: the head, then the chest, then the whole body turn
  *     toward the cursor (less so during a gesture, so a bow stays a bow).
- *  4. Reactions: a formal bow on arrival and on returning to the tab, a jump when
- *     clicked, a spin after three quick clicks, a curious head tilt now and
- *     then, arms thrown out by fast scrolling.
+ *  4. Reactions: a formal bow on arrival and on returning to the tab, a
+ *     button push when clicked, a spin after three quick clicks, a curious
+ *     head tilt now and then, arms thrown out by fast scrolling.
  *
  * Everything eases with frame-rate independent damping.
  */
@@ -47,8 +47,9 @@ type Pose = {
 
 /** Landscape screens. */
 const WIDE: Record<string, Pose> = {
-  // Top-left corner, chest up, turned toward the text in the bottom-right corner.
-  hero: { cam: [0, 165, 540], x: -125, y: 0, ry: 0.55, rx: 0, look: 0.5 },
+  // Top-left corner, a head-and-shoulders close-up, turned toward the text in
+  // the bottom-right corner.
+  hero: { cam: [0, 245, 380], x: -105, y: 0, ry: 0.55, rx: 0, look: 0.5 },
   // Full height on the left, turned toward the text on the right.
   about: { cam: [0, 40, 1450], x: -320, y: 0, ry: 0.6, rx: 0, look: 1 },
   // Leaving About it runs off to the left at the same scale…
@@ -65,7 +66,7 @@ const WIDE: Record<string, Pose> = {
 
 /** Portrait screens: the text spans the width, so the character sits behind it. */
 const TALL: Record<string, Pose> = {
-  hero: { cam: [0, 140, 780], x: -45, y: 0, ry: 0.5, rx: 0, look: 0.5 },
+  hero: { cam: [0, 230, 560], x: -40, y: 0, ry: 0.5, rx: 0, look: 0.5 },
   about: { cam: [0, 60, 2200], x: -170, y: 0, ry: 0.6, rx: 0, look: 1 },
   run: { cam: [0, 60, 2200], x: -720, y: 0, ry: 0.6, rx: 0, look: 0 },
   runIn: { cam: [0, -368, 3500], x: -700, y: 0, ry: 0.6, rx: 0, look: 0 },
@@ -103,7 +104,7 @@ type Offsets = {
 /** An arm aimed in body space: upper arm and forearm directions. */
 type ArmAim = { upper: [number, number, number]; fore: [number, number, number] };
 
-export type ActionName = "bow" | "curious" | "spin" | "jump" | "handshake" | "look";
+export type ActionName = "bow" | "curious" | "spin" | "push" | "handshake" | "look";
 type Action = {
   duration: number;
   fade?: [number, number];
@@ -125,7 +126,8 @@ const ACTIONS: Record<ActionName, Action> = {
     raw: true,
     pose: (p) => ({ botRy: smoothstep(p) * TAU, botY: Math.sin(p * Math.PI) * 24 }),
   },
-  jump: { duration: 0.9, clip: RUN, fade: [0.08, 0.2] },
+  // Presses an imaginary button: the reply to a click.
+  push: { duration: 3.2, clip: "button-pushing", fade: [0.12, 0.2] },
   handshake: { duration: 4.4, clip: "shaking-hands-2", fade: [0.12, 0.15] },
   look: { duration: 8, clip: "looking", fade: [0.1, 0.12] },
 };
@@ -277,7 +279,7 @@ export function createRig(model: Object3D, camera: Camera, clips: AnimationClip[
       play("spin", true);
       clicks = [];
     } else {
-      play("jump", true);
+      play("push", true);
     }
   };
 
