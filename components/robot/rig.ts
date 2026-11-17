@@ -57,26 +57,28 @@ const WIDE: Record<string, Pose> = {
   hero: { cam: [0, 200, 700], x: -150, y: 0, ry: 0.55, rx: 0, look: 0.5 },
   // Full robot on the left, turned toward the text on the right.
   about: { cam: [0, 40, 1450], x: -400, y: 0, ry: 0.6, rx: 0, look: 1 },
-  // The run, above the pinned skill rows: the camera pulls back so the whole
-  // robot fits between the header and the rows (feet ~385 px down a 900 px
-  // screen, head ~105 px). It enters from off-screen left…
-  run: { cam: [0, -370, 3600], x: -1650, y: 0, ry: 0.6, rx: 0, look: 0 },
-  // …and has left on the right when the pin releases.
-  runEnd: { cam: [0, -370, 3600], x: 1700, y: 0, ry: 0, rx: 0, look: 0 },
-  work: { cam: [0, -370, 3600], x: 1700, y: 0, ry: 0, rx: 0, look: 0 },
-  // Facing the visitor beside "Let's work together".
-  contact: { cam: [0, 110, 1500], x: 380, y: 0, ry: -0.15, rx: 0, look: 0.6 },
+  // Leaving About it runs off to the left at the same scale…
+  run: { cam: [0, 40, 1450], x: -1350, y: 0, ry: 0.6, rx: 0, look: 0 },
+  // …then, off-screen, the camera pulls back so the whole robot fits between
+  // the header and the pinned rows (feet ~385 px down a 900 px screen)…
+  runIn: { cam: [0, -370, 3600], x: -1700, y: 0, ry: 0.6, rx: 0, look: 0 },
+  // …and it runs in from the left, across, and out on the right.
+  runEnd: { cam: [0, -370, 3600], x: 2050, y: 0, ry: 0, rx: 0, look: 0 },
+  work: { cam: [0, -370, 3600], x: 2050, y: 0, ry: 0, rx: 0, look: 0 },
+  // Beside "Let's work together", turned toward it.
+  contact: { cam: [0, 110, 1500], x: 380, y: 0, ry: -0.45, rx: 0, look: 0.6 },
 };
 
 /** Portrait screens: the text spans the width, so the robot sits behind it. */
 const TALL: Record<string, Pose> = {
   hero: { cam: [0, 150, 950], x: -55, y: 0, ry: 0.5, rx: 0, look: 0.5 },
   about: { cam: [0, 60, 2200], x: -170, y: 0, ry: 0.6, rx: 0, look: 1 },
+  run: { cam: [0, 60, 2200], x: -720, y: 0, ry: 0.6, rx: 0, look: 0 },
   // Feet ~360 px down an 844 px screen, above the rows.
-  run: { cam: [0, -368, 3500], x: -640, y: 0, ry: 0.6, rx: 0, look: 0 },
-  runEnd: { cam: [0, -368, 3500], x: 650, y: 0, ry: 0, rx: 0, look: 0 },
-  work: { cam: [0, -368, 3500], x: 650, y: 0, ry: 0, rx: 0, look: 0 },
-  contact: { cam: [0, 110, 1750], x: 0, y: 0, ry: 0, rx: 0, look: 0.6 },
+  runIn: { cam: [0, -368, 3500], x: -700, y: 0, ry: 0.6, rx: 0, look: 0 },
+  runEnd: { cam: [0, -368, 3500], x: 800, y: 0, ry: 0, rx: 0, look: 0 },
+  work: { cam: [0, -368, 3500], x: 800, y: 0, ry: 0, rx: 0, look: 0 },
+  contact: { cam: [0, 110, 1750], x: 0, y: 0, ry: -0.3, rx: 0, look: 0.6 },
 };
 
 const KEYS = ["camX", "camY", "camZ", "x", "y", "ry", "rx", "look"] as const;
@@ -225,6 +227,7 @@ const MOODS: Record<
   hero: { face: "neutral", pose: () => ({ headRx: 0.2, headRy: 0.15 }) },
   about: { face: "reading", clip: "looking", pose: () => ({}) },
   run: { face: "happy", pose: () => ({}) },
+  runIn: { face: "happy", pose: () => ({}) },
   runEnd: { face: "happy", pose: () => ({}) },
   work: { face: "happy", pose: () => ({}) },
   contact: { face: "heart", clip: "shaking-hands-2", pose: () => ({}) },
@@ -232,6 +235,12 @@ const MOODS: Record<
 
 /** What to do when arriving in a section (at most every few seconds). */
 const ON_ENTER: Record<string, ActionName[]> = {};
+
+/** Stretches where the robot runs, scrubbed by scrolling (from → to). */
+const RUN_SEGMENTS = [
+  ["about", "run"], // off to the left, leaving About
+  ["runIn", "runEnd"], // in from the left, across the pinned rows
+];
 
 /** The run across the screen, scrubbed by scrolling. */
 const RUN_CLIPS = ["running", "running-jump"]; // a proper run cycle wins if present
@@ -334,13 +343,14 @@ export function createRig(
     const out = {} as State;
     for (const k of KEYS) out[k] = a[k] + (b[k] - a[k]) * t;
 
-    // Running: constant speed across the screen, facing the way it runs.
+    // Running: constant speed, facing the way it travels (which flips when
+    // scrolling back up).
     let runZone = 0;
-    if (stops[i].key === "run" && stops[i + 1].key === "runEnd") {
+    if (RUN_SEGMENTS.some(([from, to]) => stops[i].key === from && stops[i + 1].key === to)) {
       out.x = a.x + (b.x - a.x) * linear;
-      runZone = clamp(linear * 8, 0, 1) * clamp((1 - linear) * 8, 0, 1);
-      const facing = runDir > 0 ? Math.PI / 2 : -Math.PI / 2;
-      out.ry = a.ry + (facing - a.ry) * clamp(linear * 8, 0, 1);
+      runZone = clamp(linear * 10, 0, 1) * clamp((1 - linear) * 10, 0, 1);
+      const facing = Math.sign(b.x - a.x) * runDir > 0 ? Math.PI / 2 : -Math.PI / 2;
+      out.ry = a.ry + (facing - a.ry) * clamp(linear * 10, 0, 1);
     }
 
     // The section under the middle of the viewport sets the mood.
@@ -468,7 +478,7 @@ export function createRig(
   measure();
   const state: State = { ...scrollPose(), y: -1400 }; // rises in from below
   bot.position.y = base.py + state.y;
-  const moodWeight: Record<string, number> = { hero: 1, about: 0, run: 0, runEnd: 0, work: 0, contact: 0 };
+  const moodWeight: Record<string, number> = { hero: 1, about: 0, run: 0, runIn: 0, runEnd: 0, work: 0, contact: 0 };
   let lean = 0;
   let jolt = 0;
   let lastScroll = window.scrollY;
