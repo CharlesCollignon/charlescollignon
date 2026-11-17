@@ -12,8 +12,9 @@ const arrayBuffer = (buf) => buf.buffer.slice(buf.byteOffset, buf.byteOffset + b
 
 /**
  * The humanoid as one welded, float geometry in Mixamo's space: feet on
- * y = 0, centred, facing +Z. This is exactly the mesh uploaded to Mixamo
- * (npm run humanoid:mixamo), so Mixamo skeletons line up with it.
+ * y = 0, centred, facing +Z (the front for glTF and Mixamo). The sculpt
+ * itself faces -Z, so it is turned around here. This is the mesh to upload
+ * to Mixamo (npm run humanoid:mixamo).
  */
 export async function loadHumanoidGeometry() {
   await MeshoptDecoder.ready;
@@ -38,6 +39,7 @@ export async function loadHumanoidGeometry() {
   geometry.applyMatrix4(mesh.matrixWorld);
   // Weld shared corners: one connected surface to skin.
   geometry = mergeVertices(geometry, 1e-3);
+  geometry.rotateY(Math.PI); // face +Z
   geometry.computeBoundingBox();
   const b = geometry.boundingBox;
   geometry.translate(-(b.min.x + b.max.x) / 2, -b.min.y, -(b.min.z + b.max.z) / 2);

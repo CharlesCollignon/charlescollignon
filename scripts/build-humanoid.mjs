@@ -27,6 +27,14 @@ import { MeshoptEncoder } from "meshoptimizer";
 import { boneKey, loadFBX, loadHumanoidGeometry } from "./lib/humanoid.mjs";
 
 const RIG = "assets/animations/running-jump.fbx";
+/**
+ * RIG was made in Mixamo from the first upload, which faced -Z: Mixamo fitted
+ * the skeleton facing +Z, i.e. to the mesh's back. The mesh is now turned
+ * around (scripts/lib/humanoid.mjs), so the joints' depths are mirrored to
+ * follow it. Set to false once RIG comes from a fresh upload of the turned
+ * mesh (npm run humanoid:mixamo).
+ */
+const RIG_FITTED_BACKWARDS = true;
 const ANIMATIONS = "assets/animations";
 const OUT = "public/models/humanoid.glb";
 const FPS = 30;
@@ -46,6 +54,17 @@ const bone = (name) => {
 };
 const world = (o) => o.getWorldPosition(new THREE.Vector3());
 const worldQ = (o) => o.getWorldQuaternion(new THREE.Quaternion());
+
+if (RIG_FITTED_BACKWARDS) {
+  // Mirror each joint's depth (z → -z), parents first; rotations are kept.
+  rig.updateMatrixWorld(true);
+  const targets = new Map([...bones.values()].map((b) => [b, world(b).multiply(new THREE.Vector3(1, 1, -1))]));
+  for (const b of bones.values()) {
+    b.parent.updateMatrixWorld(true);
+    b.position.copy(b.parent.worldToLocal(targets.get(b).clone()));
+    b.updateMatrixWorld(true);
+  }
+}
 
 // The T-pose, recorded for retargeting before the arms are moved.
 rig.updateMatrixWorld(true);
