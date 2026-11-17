@@ -1,14 +1,15 @@
 /**
- * Builds the site's character: the Sketchfab humanoid, skinned to the Mixamo
- * skeleton, with every animation, in one compressed GLB.
+ * Builds the site's character: the Sketchfab model, skinned to a Mixamo
+ * skeleton, with its own material and every animation, in one compressed GLB.
  *
- *   npm run humanoid:build
- *   (assets/models/humanoid-static.glb + assets/animations/*.fbx
- *    -> public/models/humanoid.glb)
+ *   npm run character:build
+ *   (assets/models/character.source.glb + assets/animations/*.fbx
+ *    -> public/models/character.glb)
  *
  * 1. Skeleton: from RIG, an animation downloaded from Mixamo for this mesh
- *    (FBX Binary, Without Skin). Its rest pose is a T-pose; the mesh hangs
- *    its arms, so the arm bones are first turned down into the mesh's arms.
+ *    (npm run character:mixamo makes the upload). Its rest pose is a T-pose;
+ *    the model stands in an A-pose, so each arm bone is first swung onto the
+ *    mesh's arm (the direction that runs through the most vertices).
  * 2. Skin weights: each vertex goes to its nearest bone segment, stray islands
  *    (a thigh next to a hand) are handed to the next-nearest bone, then the
  *    weights are diffused across the surface so joints bend smoothly.
@@ -16,27 +17,22 @@
  *    skeleton (world-space rotation deltas from the T-pose, so clips made on
  *    other Mixamo characters work too). Played in place: the hips keep their
  *    vertical motion only. Clips are named after their files.
+ * 4. The source's material and textures are carried over; textures become
+ *    1024 px WebP.
  */
 import { readdirSync, statSync, writeFileSync } from "node:fs";
 import * as THREE from "three";
 import { GLTFExporter } from "three/addons/exporters/GLTFExporter.js";
 import { NodeIO } from "@gltf-transform/core";
-import { EXTMeshoptCompression, KHRMeshQuantization } from "@gltf-transform/extensions";
-import { meshopt, prune, quantize, resample } from "@gltf-transform/functions";
+import { ALL_EXTENSIONS } from "@gltf-transform/extensions";
+import { copyToDocument, meshopt, prune, quantize, resample, textureCompress } from "@gltf-transform/functions";
 import { MeshoptEncoder } from "meshoptimizer";
-import { boneKey, loadFBX, loadHumanoidGeometry } from "./lib/humanoid.mjs";
+import sharp from "sharp";
+import { SOURCE, boneKey, loadCharacterGeometry, loadFBX } from "./lib/character.mjs";
 
-const RIG = "assets/animations/running-jump.fbx";
-/**
- * RIG was made in Mixamo from the first upload, which faced -Z: Mixamo fitted
- * the skeleton facing +Z, i.e. to the mesh's back. The mesh is now turned
- * around (scripts/lib/humanoid.mjs), so the joints' depths are mirrored to
- * follow it. Set to false once RIG comes from a fresh upload of the turned
- * mesh (npm run humanoid:mixamo).
- */
-const RIG_FITTED_BACKWARDS = true;
+const RIG = "assets/animations/breathing-idle.fbx";
 const ANIMATIONS = "assets/animations";
-const OUT = "public/models/humanoid.glb";
+const OUT = "public/models/character.glb";
 const FPS = 30;
 /** The site's scene units: feet at this height inside the "Bot" node. */
 const FEET_Y = -243;
@@ -55,17 +51,6 @@ const bone = (name) => {
 const world = (o) => o.getWorldPosition(new THREE.Vector3());
 const worldQ = (o) => o.getWorldQuaternion(new THREE.Quaternion());
 
-if (RIG_FITTED_BACKWARDS) {
-  // Mirror each joint's depth (z → -z), parents first; rotations are kept.
-  rig.updateMatrixWorld(true);
-  const targets = new Map([...bones.values()].map((b) => [b, world(b).multiply(new THREE.Vector3(1, 1, -1))]));
-  for (const b of bones.values()) {
-    b.parent.updateMatrixWorld(true);
-    b.position.copy(b.parent.worldToLocal(targets.get(b).clone()));
-    b.updateMatrixWorld(true);
-  }
-}
-
 // The T-pose, recorded for retargeting before the arms are moved.
 rig.updateMatrixWorld(true);
 const tposeWorldQ = new Map([...bones].map(([n, b]) => [n, worldQ(b)]));
@@ -74,67 +59,89 @@ const tposeHipsY = world(hips).y;
 
 /* ---------------------------------------------------------------- mesh */
 
-const geometry = await loadHumanoidGeometry();
+const geometry = await loadCharacterGeometry();
 const P = geometry.attributes.position;
 const V = P.count;
-const vx = (i) => new THREE.Vector3(P.getX(i), P.getY(i), P.getZ(i));
+const points = Array.from({ length: V }, (_, i) => new THREE.Vector3().fromBufferAttribute(P, i));
 
 /** Turn `b` (in world space) so its child sits along `dir`. */
 function aim(b, child, dir) {
   rig.updateMatrixWorld(true);
   const from = world(child).sub(world(b)).normalize();
   const turn = new THREE.Quaternion().setFromUnitVectors(from, dir.clone().normalize());
-  const target = turn.multiply(worldQ(b));
-  b.quaternion.copy(worldQ(b.parent).invert().multiply(target));
+  b.quaternion.copy(worldQ(b.parent).invert().multiply(turn.multiply(worldQ(b))));
   rig.updateMatrixWorld(true);
 }
 
-/** Axis of the vertices in a region (centroid + principal direction). */
-function axis(filter) {
-  const pts = [];
-  for (let i = 0; i < V; i++) {
-    const p = vx(i);
-    if (filter(p)) pts.push(p);
+const segDist = (p, a, b) => {
+  const ab = b.clone().sub(a);
+  const t = THREE.MathUtils.clamp(p.clone().sub(a).dot(ab) / ab.lengthSq(), 0, 1);
+  return p.distanceTo(a.clone().addScaledVector(ab, t));
+};
+
+/**
+ * The direction from `from` (length `len`) that passes through the most mesh
+ * vertices: a limb's axis. Searched over a cone around `guess`.
+ */
+/**
+ * The arm's vertices on one side: in each horizontal slice, whatever lies
+ * beyond the outermost gap (in an A-pose the arm hangs clear of the body
+ * below the armpit; above it nothing is taken).
+ */
+function armPoints(side) {
+  const slices = new Map();
+  for (const p of points) {
+    if (p.x * side <= 0) continue;
+    const k = Math.round(p.y / 3);
+    if (!slices.has(k)) slices.set(k, []);
+    slices.get(k).push(p);
   }
-  const c = pts.reduce((a, p) => a.add(p), new THREE.Vector3()).divideScalar(pts.length);
-  // Power iteration on the covariance matrix.
-  let d = new THREE.Vector3(0, -1, 0);
-  for (let k = 0; k < 20; k++) {
-    const n = new THREE.Vector3();
-    for (const p of pts) {
-      const q = p.clone().sub(c);
-      n.addScaledVector(q, q.dot(d));
+  const out = [];
+  for (const slice of slices.values()) {
+    slice.sort((a, b) => a.x * side - b.x * side);
+    let cut = -1;
+    for (let i = 1; i < slice.length; i++) if ((slice[i].x - slice[i - 1].x) * side > 4) cut = i;
+    if (cut > 0) out.push(...slice.slice(cut));
+  }
+  return out;
+}
+const arms = { 1: armPoints(1), [-1]: armPoints(-1) };
+
+function limbDirection(from, len, guess, side) {
+  const near = arms[side].filter((p) => p.distanceTo(from) < len * 1.2);
+  let best = { score: -1, dir: guess };
+  const g = guess.clone().normalize();
+  for (let pitch = -1.4; pitch <= 1.4; pitch += 0.035) {
+    for (let yaw = -0.6; yaw <= 0.6; yaw += 0.05) {
+      const dir = g.clone().applyEuler(new THREE.Euler(yaw, 0, pitch * side, "YXZ"));
+      // Score the far part only (the shoulder's bulk would pull every arm
+      // inward), favouring vertices near the axis.
+      let score = 0;
+      for (const p of near) {
+        const rel = p.clone().sub(from);
+        const t = rel.dot(dir) / len;
+        if (t < 0.35 || t > 1.05) continue;
+        const d = rel.addScaledVector(dir, -t * len).length();
+        if (d < 14) score += 1 - d / 14;
+      }
+      if (score > best.score) best = { score, dir };
     }
-    d = n.normalize();
   }
-  if (d.y > 0) d.negate(); // pointing down the arm
-  return { c, d, n: pts.length };
+  return best;
 }
 
-// Arms: below the armpit they stand clear of the body (|x| > 50).
+// Arms: shoulder → elbow → wrist → fingertips, each swung onto the mesh.
+const deg = (v) => THREE.MathUtils.radToDeg(v).toFixed(0);
 for (const [side, s] of [["Left", 1], ["Right", -1]]) {
-  const arm = bone(`${side}Arm`), fore = bone(`${side}ForeArm`), hand = bone(`${side}Hand`);
-  const upper = axis((p) => p.x * s > 50 && p.y > 300 && p.y < 385);
-  // Upper arm: from the shoulder joint through the middle of the upper arm.
-  aim(arm, fore, upper.c.clone().sub(world(arm)));
-  const lower = axis((p) => p.x * s > 50 && p.y > 150 && p.y < 280);
-  // Forearm: from the elbow to the forearm's axis, a forearm-length on.
-  const elbow = world(fore);
-  const t = lower.d.clone();
-  const along = lower.c.clone().addScaledVector(t, -lower.c.clone().sub(elbow).dot(t));
-  const len = world(hand).distanceTo(elbow);
-  aim(fore, hand, along.addScaledVector(t, len).sub(elbow));
-  const deg = (v) => THREE.MathUtils.radToDeg(v).toFixed(0);
-  console.log(
-    `${side} arm: upper ${deg(Math.acos(-upper.d.y))}° from vertical (${upper.n} verts), ` +
-      `forearm ${deg(Math.acos(-lower.d.y))}° (${lower.n}), elbow y ${world(fore).y.toFixed(0)}, hand y ${world(hand).y.toFixed(0)}`,
-  );
-}
-// Hands and fingers continue the forearm.
-for (const side of ["Left", "Right"]) {
-  const dir = world(bone(`${side}Hand`)).sub(world(bone(`${side}ForeArm`)));
-  aim(bone(`${side}Hand`), bone(`${side}HandIndex1`), dir);
-  for (const i of [1, 2, 3]) aim(bone(`${side}HandIndex${i}`), bone(`${side}HandIndex${i + 1}`), dir);
+  const chain = [`${side}Arm`, `${side}ForeArm`, `${side}Hand`, `${side}HandIndex4`].map(bone);
+  for (let i = 0; i < 3; i++) {
+    const [b, child] = [chain[i], chain[i + 1]];
+    const len = world(child).distanceTo(world(b));
+    const current = world(child).sub(world(b));
+    const { dir, score } = limbDirection(world(b), len, current, s);
+    aim(b, child, dir);
+    console.log(`${b.name}: ${deg(Math.acos(-dir.y))}° from vertical (score ${score.toFixed(0)})`);
+  }
 }
 rig.updateMatrixWorld(true);
 
@@ -146,54 +153,65 @@ const SEGMENTS = [
   ["Neck", "Head"], ["Head", "HeadTop_End"],
   ...["Left", "Right"].flatMap((s) => [
     [`${s}Shoulder`, `${s}Arm`], [`${s}Arm`, `${s}ForeArm`], [`${s}ForeArm`, `${s}Hand`],
-    [`${s}Hand`, `${s}HandIndex4`],
+    [`${s}Hand`, `${s}HandIndex1`],
+    [`${s}HandIndex1`, `${s}HandIndex2`], [`${s}HandIndex2`, `${s}HandIndex3`], [`${s}HandIndex3`, `${s}HandIndex4`],
+    [`${s}HandThumb1`, `${s}HandThumb2`], [`${s}HandThumb2`, `${s}HandThumb3`], [`${s}HandThumb3`, `${s}HandThumb4`],
     [`${s}UpLeg`, `${s}Leg`], [`${s}Leg`, `${s}Foot`], [`${s}Foot`, `${s}ToeBase`], [`${s}ToeBase`, `${s}Toe_End`],
   ]),
-];
+].filter(([a, b]) => bones.has(a) && bones.has(b));
 const skinBones = [...bones.values()]; // skeleton order
-const segs = SEGMENTS.map(([a, b]) => ({
-  index: skinBones.indexOf(bone(a)),
-  a: world(bone(a)),
-  b: world(bone(b)),
-}));
+const segs = SEGMENTS.map(([a, b]) => ({ index: skinBones.indexOf(bone(a)), a: world(bone(a)), b: world(bone(b)) }));
 const B = segs.length;
-const segDist = (p, s) => {
-  const ab = s.b.clone().sub(s.a);
-  const t = THREE.MathUtils.clamp(p.clone().sub(s.a).dot(ab) / ab.lengthSq(), 0, 1);
-  return p.distanceTo(s.a.clone().addScaledVector(ab, t));
-};
 
-// Neighbours along mesh edges.
+// Work on welded corners: UV seams split vertices that are one point on the body.
+const key = (p) => `${Math.round(p.x * 1e3)},${Math.round(p.y * 1e3)},${Math.round(p.z * 1e3)}`;
+const ids = new Map();
+const weld = new Int32Array(V); // vertex -> corner
+const corners = [];
+for (let i = 0; i < V; i++) {
+  const k = key(points[i]);
+  if (!ids.has(k)) {
+    ids.set(k, corners.length);
+    corners.push(points[i]);
+  }
+  weld[i] = ids.get(k);
+}
+const C = corners.length;
 const index = geometry.index.array;
-const adj = Array.from({ length: V }, () => new Set());
+const adj = Array.from({ length: C }, () => new Set());
 for (let f = 0; f < index.length; f += 3) {
-  const [a, b, c] = [index[f], index[f + 1], index[f + 2]];
+  const [a, b, c] = [weld[index[f]], weld[index[f + 1]], weld[index[f + 2]]];
   adj[a].add(b).add(c);
   adj[b].add(a).add(c);
   adj[c].add(a).add(b);
 }
 const neighbours = adj.map((s) => [...s]);
 let edge = 0;
-for (let i = 0; i < V; i++) for (const j of neighbours[i]) edge += vx(i).distanceTo(vx(j));
-edge /= neighbours.reduce((n, s) => n + s.length, 0);
+let edges = 0;
+for (let i = 0; i < C; i++) {
+  for (const j of neighbours[i]) {
+    edge += corners[i].distanceTo(corners[j]);
+    edges++;
+  }
+}
+edge /= edges;
 
 // 1. Nearest segment, with the alternatives ranked for reassignment.
 const ranked = [];
-const label = new Int32Array(V);
-for (let i = 0; i < V; i++) {
-  const p = vx(i);
-  const order = segs.map((s, k) => [k, segDist(p, s)]).sort((x, y) => x[1] - y[1]);
+const label = new Int32Array(C);
+for (let i = 0; i < C; i++) {
+  const order = segs.map((s, k) => [k, segDist(corners[i], s.a, s.b)]).sort((x, y) => x[1] - y[1]);
   ranked.push(order.map(([k]) => k));
   label[i] = order[0][0];
 }
 
 // 2. Each bone keeps only its largest connected patch; strays move on to their
 //    next-nearest bone (a thigh beside the hand is not part of the hand).
-for (let pass = 0; pass < 4; pass++) {
+for (let pass = 0; pass < 6; pass++) {
   let moved = 0;
-  const seen = new Uint8Array(V);
+  const seen = new Uint8Array(C);
   const patches = Array.from({ length: B }, () => []);
-  for (let i = 0; i < V; i++) {
+  for (let i = 0; i < C; i++) {
     if (seen[i]) continue;
     const patch = [];
     const stack = [i];
@@ -221,33 +239,34 @@ for (let pass = 0; pass < 4; pass++) {
     }
   }
   if (!moved) break;
-  console.log(`pass ${pass}: ${moved} stray vertices reassigned`);
+  console.log(`pass ${pass}: ${moved} stray corners reassigned`);
 }
 
 // 3. Diffuse across the surface so each joint blends over ~BLEND units.
-const BLEND = 14;
-const iterations = Math.round((BLEND / edge) ** 2);
-let w = new Float32Array(V * B);
-for (let i = 0; i < V; i++) w[i * B + label[i]] = 1;
+const BLEND = 12;
+const iterations = Math.max(4, Math.round((BLEND / edge) ** 2));
+let w = new Float32Array(C * B);
+for (let i = 0; i < C; i++) w[i * B + label[i]] = 1;
 for (let it = 0; it < iterations; it++) {
-  const next = new Float32Array(V * B);
-  for (let i = 0; i < V; i++) {
+  const next = new Float32Array(C * B);
+  for (let i = 0; i < C; i++) {
     const n = neighbours[i];
     for (let k = 0; k < B; k++) {
       let sum = 0;
       for (const j of n) sum += w[j * B + k];
-      next[i * B + k] = 0.5 * w[i * B + k] + (0.5 * sum) / n.length;
+      next[i * B + k] = n.length ? 0.5 * w[i * B + k] + (0.5 * sum) / n.length : w[i * B + k];
     }
   }
   w = next;
 }
-console.log(`weights: mean edge ${edge.toFixed(2)}, ${iterations} diffusion steps`);
+console.log(`weights: ${C} corners (${V} vertices), mean edge ${edge.toFixed(2)}, ${iterations} diffusion steps`);
 
 // Top four influences per vertex.
 const skinIndex = new Uint16Array(V * 4);
 const skinWeight = new Float32Array(V * 4);
 for (let i = 0; i < V; i++) {
-  const top = Array.from({ length: B }, (_, k) => [k, w[i * B + k]])
+  const c = weld[i];
+  const top = Array.from({ length: B }, (_, k) => [k, w[c * B + k]])
     .sort((x, y) => y[1] - x[1])
     .slice(0, 4);
   const total = top.reduce((s, [, v]) => s + v, 0);
@@ -272,7 +291,7 @@ function retarget(file) {
   const hipsScale = tposeHipsY / srcHipsY;
 
   // Solve on a T-posed copy of our skeleton, parents first.
-  const solve = new Map(); // bone name -> scratch Object3D
+  const solve = new Map();
   const root = new THREE.Object3D();
   const build = (b, parent) => {
     const o = new THREE.Object3D();
@@ -303,7 +322,6 @@ function retarget(file) {
       if (s) {
         const delta = worldQ(s).multiply(srcRest.get(name).clone().invert());
         const target = delta.multiply(tposeWorldQ.get(name));
-        o.updateWorldMatrix(true, false);
         o.quaternion.copy(worldQ(o.parent).invert().multiply(target));
       }
       o.updateMatrixWorld(true);
@@ -327,12 +345,13 @@ const clips = files.map((f) => retarget(`${ANIMATIONS}/${f}`));
 
 /* ---------------------------------------------------------------- assemble */
 
-// Bind with the arms lowered (the mesh's own pose).
+// Bind in the mesh's own pose (arms lowered).
 rig.updateMatrixWorld(true);
-const mesh = new THREE.SkinnedMesh(geometry, new THREE.MeshStandardMaterial({ name: "Humanoid" }));
-mesh.name = "Humanoid";
+const MATERIAL = "Character";
+const mesh = new THREE.SkinnedMesh(geometry, new THREE.MeshStandardMaterial({ name: MATERIAL }));
+mesh.name = "Character";
 const character = new THREE.Group();
-character.name = "Character";
+character.name = "Rig";
 character.position.y = FEET_Y;
 hips.removeFromParent();
 character.add(hips, mesh);
@@ -352,20 +371,28 @@ globalThis.FileReader ??= class {
       this.onloadend?.();
     });
   }
-  readAsDataURL(blob) {
-    blob.arrayBuffer().then((r) => {
-      this.result = `data:${blob.type};base64,${Buffer.from(r).toString("base64")}`;
-      this.onloadend?.();
-    });
-  }
 };
 const glb = await new GLTFExporter().parseAsync(scene, { binary: true, animations: clips });
 
 const io = new NodeIO()
-  .registerExtensions([EXTMeshoptCompression, KHRMeshQuantization])
+  .registerExtensions(ALL_EXTENSIONS)
   .registerDependencies({ "meshopt.encoder": MeshoptEncoder });
 await MeshoptEncoder.ready;
 const doc = await io.readBinary(new Uint8Array(glb));
-await doc.transform(resample(), prune(), quantize(), meshopt({ encoder: MeshoptEncoder, level: "high" }));
+
+// The source's own material (base colour, metal/roughness and normal maps).
+const source = await io.read(SOURCE);
+const sourceMaterial = source.getRoot().listMaterials()[0];
+const material = copyToDocument(doc, source, [sourceMaterial]).get(sourceMaterial);
+material.setName(MATERIAL);
+for (const m of doc.getRoot().listMeshes()) for (const p of m.listPrimitives()) p.setMaterial(material);
+
+await doc.transform(
+  resample(),
+  prune(),
+  textureCompress({ encoder: sharp, targetFormat: "webp", resize: [1024, 1024], quality: 82 }),
+  quantize(),
+  meshopt({ encoder: MeshoptEncoder, level: "high" }),
+);
 writeFileSync(OUT, await io.writeBinary(doc));
 console.log(`${OUT}: ${V} vertices, ${clips.length} clips, ${(statSync(OUT).size / 1024).toFixed(0)} KB`);

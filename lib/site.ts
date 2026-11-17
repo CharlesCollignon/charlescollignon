@@ -11,7 +11,7 @@ export const SITE = {
 
 /** The 3D character is CC BY 4.0: credited in the footer. */
 export const CHARACTER_CREDIT = {
-  title: "Humanoid Model",
-  author: "CowboyTruman",
-  href: "https://sketchfab.com/3d-models/humanoid-model-4f56bd97eaa7421a80e12d35ef78d22b",
+  title: "Skinny humanoid metallic model",
+  author: "Syed Mohammad Hasan",
+  href: "https://sketchfab.com/3d-models/skinny-humanoid-metallic-model-d8d52ed456bd4d45a68f145238c700a5",
 } as const;

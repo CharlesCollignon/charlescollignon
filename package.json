@@ -7,9 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "humanoid:optimize": "node scripts/optimize-humanoid.mjs",
-    "humanoid:mixamo": "node scripts/export-humanoid-mixamo.mjs",
-    "humanoid:build": "node scripts/build-humanoid.mjs"
+    "character:mixamo": "node scripts/export-character-mixamo.mjs",
+    "character:build": "node scripts/build-character.mjs"
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",

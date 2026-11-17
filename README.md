@@ -22,17 +22,16 @@ Live at [charlescollignon.com](https://www.charlescollignon.com) (English) and
 
 ## The character
 
-The character is "[Humanoid Model](https://sketchfab.com/3d-models/humanoid-model-4f56bd97eaa7421a80e12d35ef78d22b)" by CowboyTruman (CC BY 4.0, credited in the footer), skinned to a Mixamo skeleton and animated with Mixamo motion capture. The rig (`components/character/rig.ts`) layers the clips and adds the scroll choreography, cursor tracking and reactions.
+The character is "[Skinny humanoid metallic model](https://sketchfab.com/3d-models/skinny-humanoid-metallic-model-d8d52ed456bd4d45a68f145238c700a5)" by Syed Mohammad Hasan (CC BY 4.0, credited in the footer), skinned to a Mixamo skeleton and animated with Mixamo motion capture. The rig (`components/character/rig.ts`) layers the clips and adds the scroll choreography, cursor tracking and reactions.
 
 | Step | Command | Result |
 | --- | --- | --- |
-| Clean up the Sketchfab download | `npm run humanoid:optimize` | `assets/models/humanoid_model.zip` (unzipped to `humanoid-src/`) → `assets/models/humanoid-static.glb` |
-| Make the Mixamo upload | `npm run humanoid:mixamo` | `assets/models/humanoid-mixamo.obj` |
-| Build the site's model | `npm run humanoid:build` | `assets/models/humanoid-static.glb` + `assets/animations/*.fbx` → `public/models/humanoid.glb` |
+| Make the Mixamo upload | `npm run character:mixamo` | `assets/models/character.source.glb` (the Sketchfab GLB) → `assets/models/character-mixamo.obj` |
+| Build the site's model | `npm run character:build` | `character.source.glb` + `assets/animations/*.fbx` → `public/models/character.glb` |
 
-The build takes the skeleton from `assets/animations/running-jump.fbx` (made in Mixamo from the OBJ above), fits it to the mesh, computes the skin weights, and retargets every FBX in `assets/animations/` onto it. Clips made on any Mixamo character work.
+The build takes the skeleton from `assets/animations/breathing-idle.fbx` (made in Mixamo from the OBJ above), fits its arms to the mesh, computes the skin weights, retargets every FBX in `assets/animations/` onto it, and keeps the model's own material (textures as 1024 px WebP). Clips made on any Mixamo character work.
 
-To add an animation: in Mixamo, download it as *FBX Binary, Without Skin, 30 fps*, with *In Place* checked if offered. Save it in `assets/animations/`, run `npm run humanoid:build`, then use it by its file name in `components/character/rig.ts`.
+To add an animation: in Mixamo, download it as *FBX Binary, Without Skin, 30 fps*, with *In Place* checked if offered. Save it in `assets/animations/`, run `npm run character:build`, then use it by its file name in `components/character/rig.ts`.
 
 ## Develop
 

@@ -43,10 +43,9 @@ next-env.d.ts
 # Windows download markers
 *:Zone.Identifier
 
-# Sketchfab sources (large; npm run humanoid:optimize regenerates assets/models/humanoid-static.glb)
+# Mixamo upload (npm run character:mixamo) and an earlier Sketchfab download
+assets/models/character-mixamo.obj
 assets/models/humanoid_model.zip
-assets/models/humanoid-src/
-assets/models/humanoid-mixamo.obj
 
 # Scratch scripts
 scripts/tmp/

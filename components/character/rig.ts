@@ -13,8 +13,8 @@ import {
 } from "three";
 
 /**
- * Animation for the character (public/models/humanoid.glb, built by
- * scripts/build-humanoid.mjs: a skinned mesh, a Mixamo skeleton and
+ * Animation for the character (public/models/character.glb, built by
+ * scripts/build-character.mjs: a skinned mesh, a Mixamo skeleton and
  * motion-capture clips). Every frame:
  *
  *  1. Scroll choreography: one pose per page section (`data-camera`),
