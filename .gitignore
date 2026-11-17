@@ -49,3 +49,4 @@ assets/models/robot-tpose.obj
 # Sketchfab sources (large; regenerate public/models/humanoid.glb with npm run humanoid:optimize)
 assets/models/humanoid_model.zip
 assets/models/humanoid-src/
+assets/models/humanoid-mixamo.obj

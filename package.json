@@ -10,7 +10,8 @@
     "robot:optimize": "node scripts/optimize-robot.mjs",
     "robot:mixamo": "node scripts/export-mixamo.mjs",
     "robot:bake": "node scripts/bake-animations.mjs",
-    "humanoid:optimize": "node scripts/optimize-humanoid.mjs"
+    "humanoid:optimize": "node scripts/optimize-humanoid.mjs",
+    "humanoid:mixamo": "node scripts/export-humanoid-mixamo.mjs"
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",
