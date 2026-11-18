@@ -9,7 +9,7 @@ import { createRig, type Rig } from "./rig";
 export const CHARACTER_URL = "/models/character.glb";
 
 /**
- * The character: a skinned mesh in its own metallic material, with Mixamo
+ * The character: a skinned mesh in its own brushed-silver material, with Mixamo
  * motion capture (built by scripts/build-character.mjs), animated by
  * rig.ts. The model is CC BY 4.0, credited in the footer (CHARACTER_CREDIT
  * in lib/site.ts).
@@ -26,10 +26,8 @@ export function CharacterModel({ paused }: { paused: boolean }) {
       if (mesh.isMesh) {
         // The skinned pose moves outside the bind-pose bounds.
         mesh.frustumCulled = false;
-        // Chrome is all reflection: lift the environment, and keep the
-        // sculpted detail sharp at grazing angles.
-        const material = mesh.material as THREE.MeshPhysicalMaterial;
-        material.envMapIntensity = 1.6;
+        // Keep the sculpted detail sharp at grazing angles.
+        const material = mesh.material as THREE.MeshStandardMaterial;
         if (material.normalMap) material.normalMap.anisotropy = 8;
       }
     });

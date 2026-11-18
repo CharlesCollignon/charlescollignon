@@ -14,15 +14,15 @@
  *    skeleton (world-space rotation deltas from the T-pose, so clips made on
  *    other Mixamo characters work too). Played in place: the hips keep their
  *    vertical motion only. Clips are named after their files.
- * 4. Material: polished chrome under a clear coat, keeping the source's
- *    normal map (its sculpted detail) at full resolution.
+ * 4. Material: the source's own brushed silver (colour, roughness and
+ *    normal maps), the normal map at full resolution.
  */
 import { readdirSync, statSync, writeFileSync } from "node:fs";
 import * as THREE from "three";
 import { GLTFExporter } from "three/addons/exporters/GLTFExporter.js";
 import { mergeVertices } from "three/addons/utils/BufferGeometryUtils.js";
 import { NodeIO } from "@gltf-transform/core";
-import { ALL_EXTENSIONS, KHRMaterialsClearcoat } from "@gltf-transform/extensions";
+import { ALL_EXTENSIONS } from "@gltf-transform/extensions";
 import { copyToDocument, meshopt, prune, quantize, resample, textureCompress } from "@gltf-transform/functions";
 import { MeshoptEncoder } from "meshoptimizer";
 import sharp from "sharp";
@@ -35,16 +35,6 @@ const OUT = "public/models/character.glb";
 const FPS = 30;
 /** The site's scene units: feet at this height inside the "Bot" node. */
 const FEET_Y = -243;
-
-/** Graphite chrome: polished, with soft rather than mirror-hard reflections. */
-const CHROME = {
-  color: [0.42, 0.43, 0.46, 1], // linear
-  metallic: 1,
-  roughness: 0.2,
-  clearcoat: 0.35,
-  clearcoatRoughness: 0.08,
-  normalScale: 1,
-};
 
 const world = (o) => o.getWorldPosition(new THREE.Vector3());
 const worldQ = (o) => o.getWorldQuaternion(new THREE.Quaternion());
@@ -202,33 +192,23 @@ const io = new NodeIO()
 await MeshoptEncoder.ready;
 const doc = await io.readBinary(new Uint8Array(glb));
 
-// Chrome, with the source's normal map for the sculpted detail.
+// The source's own brushed-silver material, as Sketchfab shows it: colour
+// (darker in the recesses), roughness and normal maps.
 const source = await io.read(SOURCE);
 const sourceMaterial = source.getRoot().listMaterials()[0];
 const material = copyToDocument(doc, source, [sourceMaterial]).get(sourceMaterial);
-material
-  .setName("Chrome")
-  .setBaseColorTexture(null)
-  .setMetallicRoughnessTexture(null)
-  .setBaseColorFactor(CHROME.color)
-  .setMetallicFactor(CHROME.metallic)
-  .setRoughnessFactor(CHROME.roughness)
-  .setNormalScale(CHROME.normalScale);
-for (const ext of material.listExtensions()) material.setExtension(ext.extensionName, null);
-const clearcoat = doc.createExtension(KHRMaterialsClearcoat);
-material.setExtension(
-  "KHR_materials_clearcoat",
-  clearcoat.createClearcoat().setClearcoatFactor(CHROME.clearcoat).setClearcoatRoughnessFactor(CHROME.clearcoatRoughness),
-);
+material.setName("Silver");
 for (const m of doc.getRoot().listMeshes()) for (const p of m.listPrimitives()) p.setMaterial(material);
 
 await doc.transform(
   resample(),
   prune(),
-  // AVIF at full colour resolution (4:4:4). Lossy WebP halves colour
-  // resolution, which in a normal map turns the sculpted detail into blocks.
-  textureCompress({ encoder: sharp, targetFormat: "avif", quality: 80, chromaSubsampling: "4:4:4" }),
-  // Finer normals and UVs than the defaults: mirror-like chrome shows banding.
+  // AVIF. The normal map keeps its full size and colour resolution (4:4:4;
+  // halving it, as lossy WebP does, turns the sculpted detail into blocks).
+  // Colour and roughness are soft: half size is enough.
+  textureCompress({ encoder: sharp, targetFormat: "avif", quality: 80, chromaSubsampling: "4:4:4", slots: /^normalTexture$/ }),
+  textureCompress({ encoder: sharp, targetFormat: "avif", quality: 80, resize: [1024, 1024], slots: /^(baseColorTexture|metallicRoughnessTexture)$/ }),
+  // Finer normals and UVs than the defaults: polished metal shows banding.
   quantize({ quantizeNormal: 12, quantizeTexcoord: 14 }),
   meshopt({ encoder: MeshoptEncoder, level: "high" }),
 );
