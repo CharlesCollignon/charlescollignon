@@ -5,6 +5,7 @@ import { Canvas } from "@react-three/fiber";
 import { Environment, Lightformer } from "@react-three/drei";
 import { onSceneCovered } from "@/lib/scene-bus";
 import { useMediaQuery } from "@/hooks/use-media-query";
+import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 import { CharacterModel } from "./character/character-model";
 import { Torus } from "./character/torus";
 
@@ -31,6 +32,7 @@ export default function Scene3D() {
   }, []);
 
   const paused = covered || hidden;
+  const [room] = useState(() => new RoomEnvironment());
 
   return (
     <div
@@ -46,10 +48,12 @@ export default function Scene3D() {
         camera={{ fov: 45, zoom: 1.7, near: 10, far: 20000, position: [0, 160, 900], rotation: [0, 0, 0] }}
       >
         {/* Studio lighting baked into an environment map (no HDR download).
-            The chrome shows little but these reflections: a softbox above,
-            tall strips either side of the camera, side bars, a floor bounce
-            and a blue ring. */}
+            The chrome shows little but these reflections: a soft procedural
+            room for smooth gradients, then a softbox above, tall strips
+            either side of the camera, side bars, a floor bounce and a blue
+            ring for highlights. */}
         <Environment resolution={512} frames={1}>
+          <primitive object={room} />
           <Lightformer intensity={3} position={[0, 6, -8]} scale={[12, 6, 1]} />
           <Lightformer intensity={3.5} rotation-x={Math.PI / 2} position={[0, 7, 0]} scale={[8, 8, 1]} />
           <Lightformer intensity={2.2} rotation-y={Math.PI / 2} position={[-6, 1, 0]} scale={[20, 1.2, 1]} />

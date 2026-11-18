@@ -179,8 +179,11 @@ export function createRig(model: Object3D, camera: Camera, clips: AnimationClip[
   const viewerLeft = arm("Right");
   const viewerRight = arm("Left");
 
-  const base = { px: bot.position.x, py: bot.position.y };
-  const hipsRestY = hips.position.y;
+  // The authored placement, recorded once on the model: creating the rig again
+  // (React runs effects twice in development) must not mistake the rise-in
+  // offset for the rest position.
+  const base = (bot.userData.rest ??= { px: bot.position.x, py: bot.position.y }) as { px: number; py: number };
+  const hipsRestY = (hips.userData.restY ??= hips.position.y) as number;
 
   /* ---------------------------------------------------------- clips */
 

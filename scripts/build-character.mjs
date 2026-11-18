@@ -14,8 +14,8 @@
  *    skeleton (world-space rotation deltas from the T-pose, so clips made on
  *    other Mixamo characters work too). Played in place: the hips keep their
  *    vertical motion only. Clips are named after their files.
- * 4. Material: dark chrome under a clear coat, keeping the source's normal map
- *    (its sculpted detail) at full resolution.
+ * 4. Material: polished chrome under a clear coat, keeping the source's
+ *    normal map (its sculpted detail) at full resolution.
  */
 import { readdirSync, statSync, writeFileSync } from "node:fs";
 import * as THREE from "three";
@@ -36,15 +36,14 @@ const FPS = 30;
 /** The site's scene units: feet at this height inside the "Bot" node. */
 const FEET_Y = -243;
 
-/** Dark chrome: a smoky mirror under a thin lacquer. */
+/** Graphite chrome: polished, with soft rather than mirror-hard reflections. */
 const CHROME = {
-  color: [0.26, 0.27, 0.3, 1], // linear
+  color: [0.42, 0.43, 0.46, 1], // linear
   metallic: 1,
-  roughness: 0.1,
-  clearcoat: 0.85,
-  clearcoatRoughness: 0.03,
-  /** Deepens the sculpted detail in the normal map. */
-  normalScale: 1.6,
+  roughness: 0.2,
+  clearcoat: 0.35,
+  clearcoatRoughness: 0.08,
+  normalScale: 1,
 };
 
 const world = (o) => o.getWorldPosition(new THREE.Vector3());
@@ -203,7 +202,7 @@ const io = new NodeIO()
 await MeshoptEncoder.ready;
 const doc = await io.readBinary(new Uint8Array(glb));
 
-// Dark chrome, with the source's normal map for the sculpted detail.
+// Chrome, with the source's normal map for the sculpted detail.
 const source = await io.read(SOURCE);
 const sourceMaterial = source.getRoot().listMaterials()[0];
 const material = copyToDocument(doc, source, [sourceMaterial]).get(sourceMaterial);
@@ -226,8 +225,11 @@ for (const m of doc.getRoot().listMeshes()) for (const p of m.listPrimitives()) 
 await doc.transform(
   resample(),
   prune(),
-  textureCompress({ encoder: sharp, targetFormat: "webp", quality: 92 }),
-  quantize(),
+  // AVIF at full colour resolution (4:4:4). Lossy WebP halves colour
+  // resolution, which in a normal map turns the sculpted detail into blocks.
+  textureCompress({ encoder: sharp, targetFormat: "avif", quality: 80, chromaSubsampling: "4:4:4" }),
+  // Finer normals and UVs than the defaults: mirror-like chrome shows banding.
+  quantize({ quantizeNormal: 12, quantizeTexcoord: 14 }),
   meshopt({ encoder: MeshoptEncoder, level: "high" }),
 );
 writeFileSync(OUT, await io.writeBinary(doc));
